@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Viatges Mariné Sánchez</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  :root{
+    --teal:#0f6674; --teal-dark:#0b4b56; --sand:#f7f4ef; --card:#ffffff;
+    --coral:#ff7a54; --text:#1c2b2e; --muted:#6b7a7d; --border:#e6e0d4;
+    --green:#2e7d32; --green-bg:#e6f4e6; --red:#c62828; --red-bg:#fbe9e7; --muted-bg:#eef0ee;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--sand);color:var(--text);}
+  #app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--sand);display:flex;flex-direction:column;}
+  #topbar{position:sticky;top:0;z-index:20;background:var(--teal);color:#fff;padding:10px 14px 14px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .topbar-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+  #tripSelect{flex:1;padding:8px 10px;border-radius:8px;border:none;font-size:14px;background:rgba(255,255,255,.15);color:#fff;}
+  #tripSelect option{color:#000;}
+  .trip-name-input{width:100%;background:transparent;border:none;color:#fff;font-size:20px;font-weight:700;padding:2px 0;margin-bottom:6px;}
+  .trip-name-input:focus{outline:1px solid rgba(255,255,255,.5);border-radius:4px;}
+  .trip-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,.9);margin-bottom:6px;}
+  .trip-meta-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+  .trip-meta-fields input, .trip-meta-fields select{width:100%;padding:6px 8px;border-radius:6px;border:none;font-size:12.5px;background:rgba(255,255,255,.15);color:#fff;}
+  .trip-meta-fields input::placeholder{color:rgba(255,255,255,.7);}
+  .avatars{display:flex;gap:4px;}
+  .avatar{width:24px;height:24px;border-radius:50%;background:var(--coral);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+  #content{flex:1;padding:12px 12px 90px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:520px;display:flex;overflow-x:auto;background:#fff;border-top:1px solid var(--border);z-index:20;padding-bottom:env(safe-area-inset-bottom,0);}
+  .tabbtn{flex:1 0 auto;min-width:64px;background:none;border:none;padding:8px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--muted);cursor:pointer;}
+  .tabbtn span{font-size:18px;}
+  .tabbtn.active{color:var(--teal);font-weight:700;}
+  .tab-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .pills{display:flex;gap:6px;flex-wrap:wrap;}
+  .pill{border:1px solid var(--teal);background:#fff;color:var(--teal);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap;}
+  .pill.active{background:var(--teal);color:#fff;}
+  .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .card h3{margin:0 0 8px;font-size:14.5px;color:var(--teal-dark);}
+  label{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin:8px 0 3px;}
+  input, select, textarea{width:100%;padding:8px 9px;border:1px solid var(--border);border-radius:8px;font-size:13.5px;font-family:inherit;background:#fff;color:var(--text);}
+  textarea{min-height:52px;resize:vertical;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+  .row-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .row-head select{flex:0 0 auto;width:auto;}
+  .badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .badge-green{background:var(--green-bg);color:var(--green);}
+  .badge-red{background:var(--red-bg);color:var(--red);}
+  .badge-muted{background:var(--muted-bg);color:var(--muted);}
+  .badge-confirmat{background:var(--green-bg);color:var(--green);}
+  .badge-planificacio{background:#fff3e0;color:#e65100;}
+  .badge-passat{background:var(--muted-bg);color:var(--muted);}
+  .icon-btn{margin-left:auto;background:none;border:none;font-size:15px;color:var(--muted);cursor:pointer;padding:4px;}
+  .icon-btn.danger{color:var(--red);}
+  .btn{background:var(--coral);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer;}
+  .btn-secondary{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:12.5px;cursor:pointer;}
+  .btn-secondary.small{padding:5px 10px;font-size:11.5px;}
+  .btn-secondary.danger{background:var(--red);}
+  .btn-link{display:inline-block;margin-top:6px;color:var(--teal);font-size:12.5px;font-weight:700;text-decoration:none;}
+  .link-btn{background:none;border:none;color:var(--teal);font-size:12px;text-decoration:underline;cursor:pointer;padding:0;margin-bottom:8px;}
+  .day-card-head{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+  .day-num{font-weight:700;color:var(--teal-dark);font-size:13.5px;}
+  .day-date{color:var(--muted);font-size:12px;}
+  .attachments{margin-top:10px;}
+  .attachments-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+  .chip{display:inline-flex;align-items:center;gap:4px;background:var(--muted-bg);border-radius:999px;padding:3px 4px 3px 10px;font-size:11.5px;}
+  .chip button{background:none;border:none;cursor:pointer;font-size:11.5px;padding:2px;color:var(--text);}
+  .chip-x{color:var(--red)!important;font-weight:700;}
+  .sep{border:none;border-top:1px dashed var(--border);margin:12px 0;}
+  .table-wrap{overflow-x:auto;}
+  table.budget-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  table.budget-table th, table.budget-table td{padding:6px 5px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle;}
+  table.budget-table input{padding:4px 5px;font-size:12px;}
+  table.budget-table tfoot td{font-size:13px;padding-top:8px;}
+  .empty-state{text-align:center;color:var(--muted);padding:40px 20px;font-size:13.5px;}
+  .muted{color:var(--muted);font-size:12px;}
+  .small-note{font-size:11.5px;margin:-4px 0 10px;}
+  .doc-row, .cal-row{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .doc-actions{display:flex;gap:6px;}
+  .variants-manager .variant-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .variants-manager .variant-row input[type=text], .variants-manager .variant-row input:not([type]){width:auto;flex:1;}
+  .rest-row{padding:6px 0;border-bottom:1px solid var(--border);}
+  .rest-row:last-child{border-bottom:none;}
+  .traveler-card label{margin-top:6px;}
+  .lodging-row{padding:6px 0;}
+  .split-among{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px;}
+  .split-checks{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px;}
+  .split-check{display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;color:var(--text);margin:0;}
+  .split-check input{width:auto;}
+  .balance-pos{color:var(--green);font-weight:700;}
+  .balance-neg{color:var(--red);font-weight:700;}
+  .settle-row{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .settle-row:last-child{border-bottom:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar"></header>
+  <main id="content"></main>
+  <nav id="tabbar"></nav>
+</div>
+
+<script src="data-seed.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG & STATE
+// ════════════════════════════════════════════════════
+const DB_NAME = 'viatges_app_v1';
+const DB_VERSION = 1;
+let db;
+
+const state = {
+  trips: [],
+  travelers: [],
+  currentTripId: null,
+  currentVariantId: null,
+  tab: 'itinerari',
+  budgetScenario: 'confort',
+  leafletMap: null,
+  pendingAttach: null,
+};
+
+const TABS = [
+  { id: 'itinerari',    label: 'Itinerari',   icon: '🗺️' },
+  { id: 'transport',    label: 'Vols',        icon: '✈️' },
+  { id: 'allotjament',  label: 'Hotels',      icon: '🏨' },
+  { id: 'pressupost',   label: 'Pressupost',  icon: '💰' },
+  { id: 'despeses',     label: 'Despeses',    icon: '⚖️' },
+  { id: 'mapa',         label: 'Mapa',        icon: '📍' },
+  { id: 'calendari',    label: 'Calendari',   icon: '📅' },
+  { id: 'gastronomia',  label: 'Gastro',      icon: '🍜' },
+  { id: 'viatgers',     label: 'Viatgers',    icon: '👪' },
+  { id: 'documents',    label: 'Docs',        icon: '📎' },
+];
+
+// ════════════════════════════════════════════════════
+//  INDEXEDDB
+// ════════════════════════════════════════════════════
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('trips')) d.createObjectStore('trips', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('travelers')) d.createObjectStore('travelers', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('attachments')) d.createObjectStore('attachments', { keyPath: 'id', autoIncrement: true });
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+function idbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readonly').objectStore(store).getAll();
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+function idbGet(store, key) {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readonly').objectStore(store).get(key);
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+function idbPut(store, value) {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readwrite').objectStore(store).put(value);
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+function idbAdd(store, value) {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readwrite').objectStore(store).add(value);
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+function idbDelete(store, key) {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readwrite').objectStore(store).delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function saveTrip(trip) {
+  await idbPut('trips', trip);
+  const idx = state.trips.findIndex((t) => t.id === trip.id);
+  if (idx >= 0) state.trips[idx] = trip; else state.trips.push(trip);
+}
+
+// ════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════
+async function boot() {
+  db = await openDB();
+  let trips = await idbGetAll('trips');
+  let travelers = await idbGetAll('travelers');
+  if (trips.length === 0) {
+    for (const t of (window.SEED_TRAVELERS || [])) await idbPut('travelers', t);
+    for (const trip of (window.SEED_TRIPS || [])) await idbPut('trips', trip);
+    trips = await idbGetAll('trips');
+    travelers = await idbGetAll('travelers');
+  }
+  state.trips = trips;
+  state.travelers = travelers;
+  const defaultTrip = trips.find((t) => t.isDefault) || trips[0];
+  if (defaultTrip) {
+    state.currentTripId = defaultTrip.id;
+    state.currentVariantId = defaultVariantFor(defaultTrip);
+  }
+  renderAll();
+}
+
+function getCurrentTrip() { return state.trips.find((t) => t.id === state.currentTripId); }
+function defaultVariantFor(trip) {
+  if (!trip || !trip.variants || !trip.variants.length) return null;
+  const rec = trip.variants.find((v) => v.recommended);
+  return rec ? rec.id : trip.variants[0].id;
+}
+function getNestedArray(trip, path) { return path.split('.').reduce((o, k) => o[k], trip); }
+function setNested(obj, path, value) {
+  const parts = path.split('.');
+  let o = obj;
+  for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]];
+  o[parts[parts.length - 1]] = value;
+}
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+const $ = (sel) => document.querySelector(sel);
+function escapeHtml(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function attr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function emptyState(msg) { return `<div class="empty-state">${escapeHtml(msg)}</div>`; }
+function formatEUR(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  const num = Number(n);
+  if (Number.isNaN(num)) return '—';
+  return num.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+}
+function formatDateHuman(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('ca-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+function statusLabel(s) { return { confirmat: 'Confirmat', planificacio: 'Planificació', passat: 'Passat' }[s] || s; }
+function lodgingStatusLabel(s) { return { reservat: 'Reservat', opcio: 'Opció', 'cancel·lat': 'Cancel·lat' }[s] || s; }
+function legTypeLabel(t) {
+  return { flight_intl: '✈ Vol internacional', flight_domestic: '✈ Vol intern', ferry: '⛴ Ferri', van: '🚐 Trasllat', car_rental: '🚗 Cotxe de lloguer', other: 'Transport' }[t] || 'Transport';
+}
+function gmapsLink(query, lat, lng) {
+  if (lat !== null && lat !== undefined && lat !== '' && lng !== null && lng !== undefined && lng !== '') {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat + ',' + lng)}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query || '')}`;
+}
+function findDayWaypoint(trip, day, variantId) {
+  const candidates = (trip.mapWaypoints || []).filter((w) => w.day === day && (!w.variantId || w.variantId === variantId));
+  if (!candidates.length) return null;
+  return candidates.find((w) => w.category === 'Base') || candidates[0];
+}
+function coerceValue(fieldPath, raw) {
+  const numericFields = /price|valuesByScenario|nights|^day$|order|^lat$|^lng$/i;
+  if (numericFields.test(fieldPath)) {
+    if (raw === '') return null;
+    const n = Number(raw);
+    return Number.isNaN(n) ? raw : n;
+  }
+  return raw;
+}
+function updateField(arrPath, idx, fieldPath, rawValue) {
+  const trip = getCurrentTrip();
+  const arr = getNestedArray(trip, arrPath);
+  const item = arr[idx];
+  if (!item) return trip;
+  setNested(item, fieldPath, coerceValue(fieldPath, rawValue));
+  saveTrip(trip);
+  return trip;
+}
+
+// ════════════════════════════════════════════════════
+//  NEW ROW FACTORY
+// ════════════════════════════════════════════════════
+function newRowFor(arrName, trip) {
+  const vId = (trip.variants && trip.variants.length > 1) ? state.currentVariantId : null;
+  switch (arrName) {
+    case 'itinerary': {
+      const maxDay = trip.itinerary.reduce((m, d) => Math.max(m, d.day || 0), 0);
+      return { day: maxDay + 1, date: '', variantId: vId, location: '', transit: '', activity: '', lodging: '', whereToEat: '', tips: '' };
+    }
+    case 'transportLegs':
+      return { id: 'leg-' + uid(), type: 'other', variantId: vId, code: '', route: '', dateDep: '', timeDep: '', dateArr: '', timeArr: '', provider: '', pricePerPerson: null, priceTotal: null, status: 'opcio', bookingRef: '', bookingLink: '', notes: '', attachments: [] };
+    case 'lodging':
+      return { id: 'lg-' + uid(), destination: '', variantId: vId, category: 'confort', name: '', pricePerNight: null, nights: null, checkIn: '', checkOut: '', roomConfig: '', status: 'opcio', bookingLink: '', cancellationPolicy: '', notes: '', attachments: [] };
+    case 'budget.categories':
+      return { name: '', valuesByScenario: Object.fromEntries(trip.budget.scenarios.map((s) => [s.id, 0])), notes: '' };
+    case 'activities':
+      return { location: '', variantId: vId, name: '', description: '', price: null };
+    case 'restaurants':
+      return { location: '', variantId: vId, name: '', specialty: '', dish: '' };
+    case 'mapWaypoints':
+      return { name: '', lat: 0, lng: 0, variantId: vId, day: 1, order: trip.mapWaypoints.length + 1, category: 'Excursio', description: '' };
+    case 'variants':
+      return { id: 'v-' + uid(), label: 'Nova variant', recommended: false };
+    case 'expenses':
+      return { id: 'exp-' + uid(), date: '', description: '', amount: null, paidBy: (trip.travelerIds || [])[0] || null, splitAmong: [...(trip.travelerIds || [])], category: '', notes: '' };
+    default:
+      return {};
+  }
+}
+function newBlankTrip() {
+  const id = 'trip-' + uid();
+  const coreIds = state.travelers.filter((t) => t.isCoreFamily).map((t) => t.id);
+  return {
+    id, name: 'Nou viatge', destination: '', status: 'planificacio', isDefault: false,
+    dateStart: '', dateEnd: '', currency: 'EUR', notes: '',
+    travelerIds: coreIds,
+    familyGroups: [{ id: 'f1', label: 'Família', travelerIds: coreIds, roomConfig: '' }],
+    variants: [{ id: 'principal', label: 'Ruta principal', recommended: true }],
+    itinerary: [], transportLegs: [], lodging: [], lodgingOptions: [], activities: [], restaurants: [],
+    budget: { scenarios: [{ id: 'economic', label: 'Econòmic' }, { id: 'confort', label: 'Confort' }, { id: 'premium', label: 'Premium' }], categories: [], imprevistosPct: 0.10, familyTotals: [] },
+    expenses: [],
+    mapWaypoints: [], myMapsUrl: null,
+  };
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: SHELL
+// ════════════════════════════════════════════════════
+function renderAll() {
+  renderTopbar();
+  renderTabbar();
+  const trip = getCurrentTrip();
+  if (!trip) { $('#content').innerHTML = emptyState('Cap viatge. Crea’n un de nou amb el botó de dalt.'); return; }
+  switch (state.tab) {
+    case 'itinerari': renderItinerariTab(trip); break;
+    case 'transport': renderTransportTab(trip); break;
+    case 'allotjament': renderAllotjamentTab(trip); break;
+    case 'pressupost': renderPressupostTab(trip); break;
+    case 'despeses': renderDespesesTab(trip); break;
+    case 'mapa': renderMapaTab(trip); break;
+    case 'calendari': renderCalendariTab(trip); break;
+    case 'gastronomia': renderGastronomiaTab(trip); break;
+    case 'viatgers': renderViatgersTab(trip); break;
+    case 'documents': renderDocumentsTab(trip); break;
+  }
+}
+
+function renderTopbar() {
+  const trip = getCurrentTrip();
+  if (!trip) {
+    $('#topbar').innerHTML = `<div class="topbar-row"><strong>Viatges Mariné Sánchez</strong>
+      <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button></div>`;
+    return;
+  }
+  $('#topbar').innerHTML = `
+    <div class="topbar-row">
+      <select id="tripSelect">${state.trips.map((t) => `<option value="${t.id}" ${t.id === trip.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}</select>
+      <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button>
+      ${state.trips.length > 1 ? `<button class="btn-secondary small danger" data-action="delete-trip" data-id="${trip.id}">🗑</button>` : ''}
+    </div>
+    <input class="trip-name-input" data-trip-field="name" value="${attr(trip.name)}">
+    <div class="trip-meta-fields">
+      <input data-trip-field="destination" value="${attr(trip.destination)}" placeholder="Destinació">
+      <select data-trip-field="status">
+        <option value="planificacio" ${trip.status === 'planificacio' ? 'selected' : ''}>Planificació</option>
+        <option value="confirmat" ${trip.status === 'confirmat' ? 'selected' : ''}>Confirmat</option>
+        <option value="passat" ${trip.status === 'passat' ? 'selected' : ''}>Passat</option>
+      </select>
+      <input type="date" data-trip-field="dateStart" value="${attr(trip.dateStart)}">
+      <input type="date" data-trip-field="dateEnd" value="${attr(trip.dateEnd)}">
+    </div>
+    <div class="trip-meta">
+      <span class="badge badge-${trip.status}">${statusLabel(trip.status)}</span>
+      <div class="avatars">${(trip.travelerIds || []).map((id) => {
+        const t = state.travelers.find((x) => x.id === id);
+        return t ? `<span class="avatar" title="${attr(t.firstName + ' ' + t.lastName)}">${escapeHtml((t.firstName || '?')[0])}</span>` : '';
+      }).join('')}</div>
+    </div>`;
+  $('#tripSelect').addEventListener('change', (e) => {
+    state.currentTripId = e.target.value;
+    state.currentVariantId = defaultVariantFor(getCurrentTrip());
+    renderAll();
+  });
+}
+
+function renderTabbar() {
+  $('#tabbar').innerHTML = TABS.map((t) => `<button class="tabbtn ${state.tab === t.id ? 'active' : ''}" data-action="switch-tab" data-tab="${t.id}"><span>${t.icon}</span><small>${t.label}</small></button>`).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: ITINERARI
+// ════════════════════════════════════════════════════
+function renderVariantsManager(trip) {
+  if (!trip.variants || !trip.variants.length) return '';
+  return `<div class="card variants-manager">
+    <h3>Variants de ruta</h3>
+    ${trip.variants.map((v, i) => `
+      <div class="variant-row">
+        <input type="radio" name="recommended" data-action="mark-recommended" data-variant="${v.id}" ${v.recommended ? 'checked' : ''} title="Marca com a recomanada">
+        <input data-arr="variants" data-idx="${i}" data-field="label" value="${attr(v.label)}">
+        <button class="icon-btn danger" data-action="remove-row" data-arr="variants" data-idx="${i}">✕</button>
+      </div>`).join('')}
+    <button class="btn-secondary small" data-action="add-row" data-arr="variants">+ Afegir variant</button>
+  </div>`;
+}
+
+function renderItinerariTab(trip) {
+  const hasVariants = (trip.variants || []).length > 1;
+  const variantPills = (trip.variants && trip.variants.length) ? `<div class="pills">${trip.variants.map((v) => `
+    <button class="pill ${v.id === state.currentVariantId ? 'active' : ''}" data-action="switch-variant" data-variant="${v.id}">${escapeHtml(v.label)}${v.recommended ? ' ⭐' : ''}</button>
+  `).join('')}</div>` : '';
+  const days = trip.itinerary.map((d, i) => ({ ...d, _idx: i })).filter((d) => !d.variantId || d.variantId === state.currentVariantId);
+  const cards = days.map((d) => {
+    const wp = findDayWaypoint(trip, d.day, state.currentVariantId);
+    const mapsUrl = gmapsLink(d.location, wp ? wp.lat : null, wp ? wp.lng : null);
+    return `
+    <div class="card">
+      <div class="day-card-head"><span class="day-num">Dia ${d.day}</span><span class="day-date">${formatDateHuman(d.date)}</span>
+        <button class="icon-btn danger" data-action="remove-row" data-arr="itinerary" data-idx="${d._idx}">✕</button></div>
+      <div class="grid2">
+        <label>Dia núm.<input type="number" data-arr="itinerary" data-idx="${d._idx}" data-field="day" value="${d.day ?? ''}"></label>
+        <label>Data<input type="date" data-arr="itinerary" data-idx="${d._idx}" data-field="date" value="${attr(d.date)}"></label>
+      </div>
+      <label>Ubicació<input data-arr="itinerary" data-idx="${d._idx}" data-field="location" value="${attr(d.location)}"></label>
+      ${d.location ? `<a class="btn-link" href="${mapsUrl}" target="_blank" rel="noopener">📍 Obrir a Google Maps ↗</a>` : ''}
+      <label>Trajecte / trànsit<input data-arr="itinerary" data-idx="${d._idx}" data-field="transit" value="${attr(d.transit)}"></label>
+      <label>Activitat<textarea data-arr="itinerary" data-idx="${d._idx}" data-field="activity">${escapeHtml(d.activity || '')}</textarea></label>
+      <label>Allotjament<input data-arr="itinerary" data-idx="${d._idx}" data-field="lodging" value="${attr(d.lodging)}"></label>
+      <label>On menjar<input data-arr="itinerary" data-idx="${d._idx}" data-field="whereToEat" value="${attr(d.whereToEat)}"></label>
+      <label>Consells<input data-arr="itinerary" data-idx="${d._idx}" data-field="tips" value="${attr(d.tips)}"></label>
+    </div>`;
+  }).join('') || emptyState('Encara no hi ha dies a l’itinerari.');
+  $('#content').innerHTML = `
+    ${renderVariantsManager(trip)}
+    <div class="tab-toolbar">${variantPills}<button class="btn" data-action="add-row" data-arr="itinerary">+ Afegir dia</button></div>
+    ${cards}`;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: VOLS I TRANSPORT
+// ════════════════════════════════════════════════════
+function renderAttachments(arrName, idx, attachments) {
+  const items = (attachments || []).map((a, ai) => `
+    <span class="chip">
+      <button data-action="open-attachment" data-arr="${arrName}" data-idx="${idx}" data-ai="${ai}">📎 ${escapeHtml(a.filename)}</button>
+      <button class="chip-x" data-action="delete-attachment" data-arr="${arrName}" data-idx="${idx}" data-ai="${ai}">✕</button>
+    </span>`).join('');
+  return `<div class="attachments">
+    <div class="attachments-list">${items}</div>
+    <button class="btn-secondary small" data-action="attach-file" data-arr="${arrName}" data-idx="${idx}">+ Adjuntar PDF</button>
+  </div>`;
+}
+
+function renderTransportTab(trip) {
+  const legs = trip.transportLegs.map((l, i) => ({ ...l, _idx: i })).filter((l) => !l.variantId || l.variantId === state.currentVariantId);
+  const typeOptions = ['flight_intl', 'flight_domestic', 'ferry', 'van', 'car_rental', 'other'];
+  const typeLabels = { flight_intl: 'Vol internacional', flight_domestic: 'Vol intern', ferry: 'Ferri', van: 'Furgoneta / trasllat', car_rental: 'Cotxe de lloguer', other: 'Altre' };
+  const cards = legs.map((l) => `
+    <div class="card">
+      <div class="row-head">
+        <select data-arr="transportLegs" data-idx="${l._idx}" data-field="type">${typeOptions.map((t) => `<option value="${t}" ${t === l.type ? 'selected' : ''}>${typeLabels[t]}</option>`).join('')}</select>
+        <span class="badge ${l.status === 'reservat' ? 'badge-green' : 'badge-muted'}">${l.status === 'reservat' ? 'Reservat' : 'Opció'}</span>
+        <button class="icon-btn danger" data-action="remove-row" data-arr="transportLegs" data-idx="${l._idx}">✕</button>
+      </div>
+      <label>Codi<input data-arr="transportLegs" data-idx="${l._idx}" data-field="code" value="${attr(l.code)}"></label>
+      <label>Ruta<input data-arr="transportLegs" data-idx="${l._idx}" data-field="route" value="${attr(l.route)}"></label>
+      <div class="grid2">
+        <label>Data sortida<input type="date" data-arr="transportLegs" data-idx="${l._idx}" data-field="dateDep" value="${attr(l.dateDep)}"></label>
+        <label>Hora sortida<input data-arr="transportLegs" data-idx="${l._idx}" data-field="timeDep" value="${attr(l.timeDep)}" placeholder="22:30"></label>
+        <label>Data arribada<input type="date" data-arr="transportLegs" data-idx="${l._idx}" data-field="dateArr" value="${attr(l.dateArr)}"></label>
+        <label>Hora arribada<input data-arr="transportLegs" data-idx="${l._idx}" data-field="timeArr" value="${attr(l.timeArr)}" placeholder="07:05"></label>
+      </div>
+      <label>Proveïdor<input data-arr="transportLegs" data-idx="${l._idx}" data-field="provider" value="${attr(l.provider)}"></label>
+      <div class="grid2">
+        <label>€/persona<input type="number" data-arr="transportLegs" data-idx="${l._idx}" data-field="pricePerPerson" value="${l.pricePerPerson ?? ''}"></label>
+        <label>€ total<input type="number" data-arr="transportLegs" data-idx="${l._idx}" data-field="priceTotal" value="${l.priceTotal ?? ''}"></label>
+      </div>
+      <label>Estat
+        <select data-arr="transportLegs" data-idx="${l._idx}" data-field="status">
+          <option value="opcio" ${l.status === 'opcio' ? 'selected' : ''}>Opció</option>
+          <option value="reservat" ${l.status === 'reservat' ? 'selected' : ''}>Reservat</option>
+        </select>
+      </label>
+      <label>Referència de reserva<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingRef" value="${attr(l.bookingRef)}"></label>
+      <label>Enllaç de reserva<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingLink" value="${attr(l.bookingLink)}" placeholder="https://..."></label>
+      ${l.bookingLink ? `<a class="btn-link" href="${attr(l.bookingLink)}" target="_blank" rel="noopener">Obrir enllaç de reserva ↗</a>` : ''}
+      <label>Notes<textarea data-arr="transportLegs" data-idx="${l._idx}" data-field="notes">${escapeHtml(l.notes || '')}</textarea></label>
+      ${renderAttachments('transportLegs', l._idx, l.attachments)}
+    </div>`).join('') || emptyState('Cap tram de transport encara.');
+  $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-row" data-arr="transportLegs">+ Afegir tram</button></div>${cards}`;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: ALLOTJAMENT
+// ════════════════════════════════════════════════════
+function renderAllotjamentTab(trip) {
+  const items = trip.lodging.map((l, i) => ({ ...l, _idx: i })).filter((l) => !l.variantId || l.variantId === state.currentVariantId);
+  const grouped = {};
+  items.forEach((l) => { (grouped[l.destination || '(sense destinació)'] = grouped[l.destination || '(sense destinació)'] || []).push(l); });
+  const cards = Object.entries(grouped).map(([dest, list]) => `
+    <div class="card">
+      <h3>${escapeHtml(dest)}</h3>
+      ${list.map((l) => `
+        <div class="lodging-row">
+          <div class="row-head">
+            <select data-arr="lodging" data-idx="${l._idx}" data-field="category">
+              <option value="economic" ${l.category === 'economic' ? 'selected' : ''}>Econòmic</option>
+              <option value="confort" ${l.category === 'confort' ? 'selected' : ''}>Confort</option>
+              <option value="premium" ${l.category === 'premium' ? 'selected' : ''}>Premium</option>
+            </select>
+            <span class="badge ${l.status === 'reservat' ? 'badge-green' : (l.status === 'cancel·lat' ? 'badge-red' : 'badge-muted')}">${lodgingStatusLabel(l.status)}</span>
+            <button class="icon-btn danger" data-action="remove-row" data-arr="lodging" data-idx="${l._idx}">✕</button>
+          </div>
+          <label>Destinació<input data-arr="lodging" data-idx="${l._idx}" data-field="destination" value="${attr(l.destination)}"></label>
+          <label>Nom de l'hotel<input data-arr="lodging" data-idx="${l._idx}" data-field="name" value="${attr(l.name)}"></label>
+          <div class="grid2">
+            <label>Check-in<input type="date" data-arr="lodging" data-idx="${l._idx}" data-field="checkIn" value="${attr(l.checkIn)}"></label>
+            <label>Check-out<input type="date" data-arr="lodging" data-idx="${l._idx}" data-field="checkOut" value="${attr(l.checkOut)}"></label>
+            <label>Nits<input type="number" data-arr="lodging" data-idx="${l._idx}" data-field="nights" value="${l.nights ?? ''}"></label>
+            <label>€/nit<input type="number" data-arr="lodging" data-idx="${l._idx}" data-field="pricePerNight" value="${l.pricePerNight ?? ''}"></label>
+          </div>
+          <label>Configuració d'habitacions<input data-arr="lodging" data-idx="${l._idx}" data-field="roomConfig" value="${attr(l.roomConfig)}"></label>
+          <label>Estat
+            <select data-arr="lodging" data-idx="${l._idx}" data-field="status">
+              <option value="opcio" ${l.status === 'opcio' ? 'selected' : ''}>Opció</option>
+              <option value="reservat" ${l.status === 'reservat' ? 'selected' : ''}>Reservat</option>
+              <option value="cancel·lat" ${l.status === 'cancel·lat' ? 'selected' : ''}>Cancel·lat</option>
+            </select>
+          </label>
+          <label>Política de cancel·lació<input data-arr="lodging" data-idx="${l._idx}" data-field="cancellationPolicy" value="${attr(l.cancellationPolicy)}"></label>
+          <label>Enllaç Booking.com<input data-arr="lodging" data-idx="${l._idx}" data-field="bookingLink" value="${attr(l.bookingLink)}" placeholder="https://www.booking.com/..."></label>
+          ${l.bookingLink ? `<a class="btn-link" href="${attr(l.bookingLink)}" target="_blank" rel="noopener">Obrir a Booking.com ↗</a>` : ''}
+          ${(l.name || l.destination) ? `<a class="btn-link" href="${gmapsLink(((l.name || '') + ' ' + (l.destination || '')).trim())}" target="_blank" rel="noopener">📍 Obrir a Google Maps ↗</a>` : ''}
+          <label>Notes<textarea data-arr="lodging" data-idx="${l._idx}" data-field="notes">${escapeHtml(l.notes || '')}</textarea></label>
+          ${renderAttachments('lodging', l._idx, l.attachments)}
+        </div>`).join('<hr class="sep">')}
+    </div>`).join('') || emptyState('Cap allotjament encara.');
+  const optionsTable = (trip.lodgingOptions && trip.lodgingOptions.length) ? `
+    <div class="card">
+      <h3>Comparativa d'opcions per categoria</h3>
+      <div class="table-wrap"><table class="budget-table">
+        <thead><tr><th>Destinació</th><th>Econòmic</th><th>Confort</th><th>Premium</th></tr></thead>
+        <tbody>${trip.lodgingOptions.map((o) => `<tr><td>${escapeHtml(o.destination)}</td>
+          <td>${o.economic && o.economic.name ? `${escapeHtml(o.economic.name)}<br><small>${escapeHtml(o.economic.priceRange)} €/nit</small>` : '—'}</td>
+          <td>${o.confort && o.confort.name ? `${escapeHtml(o.confort.name)}<br><small>${escapeHtml(o.confort.priceRange)} €/nit</small>` : '—'}</td>
+          <td>${o.premium && o.premium.name ? `${escapeHtml(o.premium.name)}<br><small>${escapeHtml(o.premium.priceRange)} €/nit</small>` : '—'}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>` : '';
+  $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-row" data-arr="lodging">+ Afegir reserva</button></div>${cards}${optionsTable}`;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: PRESSUPOST
+// ════════════════════════════════════════════════════
+function renderPressupostTab(trip) {
+  const scenarios = trip.budget.scenarios;
+  if (!scenarios.length) { $('#content').innerHTML = emptyState('Aquest viatge encara no té escenaris de pressupost.'); return; }
+  if (!scenarios.find((s) => s.id === state.budgetScenario)) state.budgetScenario = scenarios[0].id;
+  const cats = trip.budget.categories;
+  const totals = {};
+  scenarios.forEach((s) => { totals[s.id] = cats.reduce((sum, c) => sum + (Number(c.valuesByScenario[s.id]) || 0), 0); });
+  const scenarioPills = `<div class="pills">${scenarios.map((s) => `<button class="pill ${s.id === state.budgetScenario ? 'active' : ''}" data-action="switch-scenario" data-scenario="${s.id}">${escapeHtml(s.label)}</button>`).join('')}</div>`;
+  const rows = cats.map((c, i) => `
+    <tr>
+      <td><input data-arr="budget.categories" data-idx="${i}" data-field="name" value="${attr(c.name)}"></td>
+      ${scenarios.map((s) => `<td><input type="number" data-arr="budget.categories" data-idx="${i}" data-field="valuesByScenario.${s.id}" value="${c.valuesByScenario[s.id] ?? ''}"></td>`).join('')}
+      <td><button class="icon-btn danger" data-action="remove-row" data-arr="budget.categories" data-idx="${i}">✕</button></td>
+    </tr>`).join('');
+  const subtotal = totals[state.budgetScenario] || 0;
+  const imprevistos = subtotal * (trip.budget.imprevistosPct || 0);
+  const total = subtotal + imprevistos;
+  const nTravelers = (trip.travelerIds || []).length || 1;
+  const familyRows = (trip.budget.familyTotals || []).map((f) => {
+    const fg = (trip.familyGroups || []).find((g) => g.id === f.familyGroupId);
+    const fgCount = (fg && fg.travelerIds ? fg.travelerIds.length : 1) || 1;
+    const fTotal = f.byScenario[state.budgetScenario];
+    return `<tr><td>${escapeHtml(fg ? fg.label : f.familyGroupId)}</td><td>${formatEUR(fTotal)}</td><td>${formatEUR((fTotal || 0) / fgCount)} /pers.</td></tr>`;
+  }).join('');
+  $('#content').innerHTML = `
+    <div class="tab-toolbar">${scenarioPills}</div>
+    <div class="card table-wrap">
+      <table class="budget-table">
+        <thead><tr><th>Concepte</th>${scenarios.map((s) => `<th>${escapeHtml(s.label)}</th>`).join('')}<th></th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot>
+          <tr><td><strong>Subtotal</strong></td><td colspan="${scenarios.length}"><strong>${formatEUR(subtotal)}</strong></td><td></td></tr>
+          <tr><td>Imprevistos (${Math.round((trip.budget.imprevistosPct || 0) * 100)}%)</td><td colspan="${scenarios.length}">${formatEUR(imprevistos)}</td><td></td></tr>
+          <tr><td><strong>TOTAL</strong></td><td colspan="${scenarios.length}"><strong>${formatEUR(total)}</strong></td><td></td></tr>
+          <tr><td>Cost per persona (${nTravelers})</td><td colspan="${scenarios.length}">${formatEUR(total / nTravelers)}</td><td></td></tr>
+        </tfoot>
+      </table>
+      <button class="btn-secondary small" data-action="add-row" data-arr="budget.categories">+ Afegir categoria</button>
+    </div>
+    ${familyRows ? `<div class="card"><h3>Desglossament per família</h3><div class="table-wrap"><table class="budget-table"><thead><tr><th>Família</th><th>Total</th><th>Per persona</th></tr></thead><tbody>${familyRows}</tbody></table></div></div>` : ''}
+  `;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: DESPESES (seguiment de pagaments i liquidació)
+// ════════════════════════════════════════════════════
+function travelerName(id) {
+  const t = state.travelers.find((x) => x.id === id);
+  return t ? `${t.firstName} ${t.lastName}`.trim() : '(desconegut)';
+}
+function computeBalances(trip) {
+  const balances = {};
+  (trip.travelerIds || []).forEach((id) => { balances[id] = 0; });
+  (trip.expenses || []).forEach((exp) => {
+    const amount = Number(exp.amount) || 0;
+    const among = (exp.splitAmong && exp.splitAmong.length) ? exp.splitAmong.filter((id) => balances[id] !== undefined) : Object.keys(balances);
+    const share = among.length ? amount / among.length : 0;
+    if (exp.paidBy != null && balances[exp.paidBy] !== undefined) balances[exp.paidBy] += amount;
+    among.forEach((id) => { balances[id] -= share; });
+  });
+  return balances;
+}
+function simplifyDebts(balances) {
+  const creditors = [];
+  const debtors = [];
+  Object.entries(balances).forEach(([id, bal]) => {
+    const r = Math.round(bal * 100) / 100;
+    if (r > 0.01) creditors.push({ id, amount: r });
+    else if (r < -0.01) debtors.push({ id, amount: -r });
+  });
+  creditors.sort((a, b) => b.amount - a.amount);
+  debtors.sort((a, b) => b.amount - a.amount);
+  const transactions = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const d = debtors[i], c = creditors[j];
+    const amt = Math.round(Math.min(d.amount, c.amount) * 100) / 100;
+    if (amt > 0.01) transactions.push({ from: d.id, to: c.id, amount: amt });
+    d.amount -= amt; c.amount -= amt;
+    if (d.amount <= 0.01) i++;
+    if (c.amount <= 0.01) j++;
+  }
+  return transactions;
+}
+function renderDespesesTab(trip) {
+  const expenses = trip.expenses || [];
+  const travelers = (trip.travelerIds || []).map((id) => state.travelers.find((t) => t.id === id)).filter(Boolean);
+  const cards = expenses.map((exp, i) => {
+    const among = new Set(exp.splitAmong || []);
+    return `
+    <div class="card">
+      <div class="row-head">
+        <input data-arr="expenses" data-idx="${i}" data-field="description" value="${attr(exp.description)}" placeholder="Concepte (p.ex. Sopar a Coron)" style="flex:1;">
+        <button class="icon-btn danger" data-action="remove-row" data-arr="expenses" data-idx="${i}">✕</button>
+      </div>
+      <div class="grid2">
+        <label>Import (€)<input type="number" data-arr="expenses" data-idx="${i}" data-field="amount" value="${exp.amount ?? ''}"></label>
+        <label>Data<input type="date" data-arr="expenses" data-idx="${i}" data-field="date" value="${attr(exp.date)}"></label>
+      </div>
+      <label>Pagat per
+        <select data-arr="expenses" data-idx="${i}" data-field="paidBy">
+          ${travelers.map((t) => `<option value="${t.id}" ${exp.paidBy === t.id ? 'selected' : ''}>${escapeHtml(t.firstName + ' ' + t.lastName)}</option>`).join('')}
+        </select>
+      </label>
+      <label>Categoria<input data-arr="expenses" data-idx="${i}" data-field="category" list="expenseCategories" value="${attr(exp.category)}"></label>
+      <label>Es reparteix entre</label>
+      <div class="split-among">
+        ${(trip.familyGroups || []).map((g) => `<button type="button" class="btn-secondary small" data-action="expense-split-family" data-idx="${i}" data-family="${g.id}">Tota ${escapeHtml(g.label)}</button>`).join('')}
+        <button type="button" class="btn-secondary small" data-action="expense-split-all" data-idx="${i}">Tothom</button>
+      </div>
+      <div class="split-checks">
+        ${travelers.map((t) => `<label class="split-check"><input type="checkbox" data-action="toggle-expense-split" data-idx="${i}" data-traveler="${t.id}" ${among.has(t.id) ? 'checked' : ''}> ${escapeHtml(t.firstName)}</label>`).join('')}
+      </div>
+      <label>Notes<input data-arr="expenses" data-idx="${i}" data-field="notes" value="${attr(exp.notes)}"></label>
+    </div>`;
+  }).join('') || emptyState('Cap despesa apuntada encara. Afegeix-ne una cada cop que algú pagui alguna cosa del viatge.');
+
+  const balances = computeBalances(trip);
+  const totalSpent = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+  const personRows = travelers.map((t) => {
+    const paid = expenses.filter((e) => e.paidBy === t.id).reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    const bal = balances[t.id] || 0;
+    const owed = paid - bal;
+    return `<tr><td>${escapeHtml(t.firstName + ' ' + t.lastName)}</td><td>${formatEUR(paid)}</td><td>${formatEUR(owed)}</td>
+      <td class="${bal > 0.01 ? 'balance-pos' : (bal < -0.01 ? 'balance-neg' : '')}">${bal > 0.01 ? '+' : ''}${formatEUR(bal)}</td></tr>`;
+  }).join('');
+  const familyRows = (trip.familyGroups || []).map((g) => {
+    const memberIds = g.travelerIds || [];
+    const bal = memberIds.reduce((s, id) => s + (balances[id] || 0), 0);
+    const paid = expenses.filter((e) => memberIds.includes(e.paidBy)).reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    return `<tr><td>${escapeHtml(g.label)}</td><td>${formatEUR(paid)}</td>
+      <td class="${bal > 0.01 ? 'balance-pos' : (bal < -0.01 ? 'balance-neg' : '')}">${bal > 0.01 ? '+' : ''}${formatEUR(bal)}</td></tr>`;
+  }).join('');
+  const settlement = simplifyDebts(balances);
+  const settlementRows = settlement.map((t) => `<div class="settle-row">💸 <strong>${escapeHtml(travelerName(t.from))}</strong> ha de pagar <strong>${formatEUR(t.amount)}</strong> a <strong>${escapeHtml(travelerName(t.to))}</strong></div>`).join('')
+    || `<div class="muted">Tothom està en pau — cap transferència pendent.</div>`;
+
+  $('#content').innerHTML = `
+    <datalist id="expenseCategories">
+      <option value="Allotjament"></option><option value="Vols i transport"></option><option value="Menjar"></option><option value="Activitats"></option><option value="Altres"></option>
+    </datalist>
+    <div class="tab-toolbar"><button class="btn" data-action="add-row" data-arr="expenses">+ Afegir despesa</button><span class="muted">Total gastat: <strong>${formatEUR(totalSpent)}</strong></span></div>
+    ${cards}
+    <div class="card table-wrap">
+      <h3>Balanç per persona</h3>
+      <table class="budget-table"><thead><tr><th>Viatger</th><th>Ha pagat</th><th>Li corresponia</th><th>Balanç</th></tr></thead><tbody>${personRows}</tbody></table>
+    </div>
+    ${familyRows ? `<div class="card table-wrap"><h3>Balanç per família</h3><table class="budget-table"><thead><tr><th>Família</th><th>Ha pagat</th><th>Balanç</th></tr></thead><tbody>${familyRows}</tbody></table></div>` : ''}
+    <div class="card">
+      <h3>Liquidació final</h3>
+      ${settlementRows}
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: MAPA
+// ════════════════════════════════════════════════════
+function renderMapaTab(trip) {
+  $('#content').innerHTML = `
+    <div class="card"><div id="leafletMap" style="height:56vh;border-radius:12px;overflow:hidden;"></div></div>
+    <div class="card">
+      <h3>Exportar / enllaçar</h3>
+      <button class="btn-secondary" data-action="export-mymaps-csv">⬇ Exportar CSV per Google My Maps</button>
+      <p class="muted small-note" style="margin-top:8px;">A Google My Maps: Importa capa → tria aquest CSV → assigna Latitud/Longitud com a posició i "Nom" com a títol.</p>
+      <label>Enllaç a un mapa de Google My Maps ja publicat<input data-trip-field="myMapsUrl" value="${attr(trip.myMapsUrl)}" placeholder="https://www.google.com/maps/d/..."></label>
+      ${trip.myMapsUrl ? `<a class="btn-link" href="${attr(trip.myMapsUrl)}" target="_blank" rel="noopener">Obrir a Google My Maps ↗</a>` : ''}
+    </div>`;
+  initMap(trip);
+}
+
+const CATEGORY_COLORS = { Aeroport: '#0f6674', Base: '#ff7a54', Excursio: '#2e7d32', Estrella: '#c62828', Platja: '#0288d1', Connexio: '#6b7a7d', Opcional: '#9e9e9e', Ciutat: '#6a3d9a' };
+const CATEGORY_COLORS_FALLBACK = '#333333';
+
+function initMap(trip) {
+  const mapEl = document.getElementById('leafletMap');
+  if (!mapEl || typeof L === 'undefined') return;
+  if (state.leafletMap) { state.leafletMap.remove(); state.leafletMap = null; }
+  const map = L.map('leafletMap');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18 }).addTo(map);
+  const points = (trip.mapWaypoints || []).filter((w) => !w.variantId || w.variantId === state.currentVariantId).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  if (points.length) {
+    points.forEach((w) => {
+      const color = CATEGORY_COLORS[w.category] || CATEGORY_COLORS_FALLBACK;
+      const marker = L.circleMarker([w.lat, w.lng], { radius: 7, color, fillColor: color, fillOpacity: 0.85, weight: 2 }).addTo(map);
+      marker.bindPopup(`<strong>${escapeHtml(w.name)}</strong><br>${escapeHtml(w.description || '')}<br><small>Dia ${w.day ?? '—'} · ${escapeHtml(w.category || '')}</small>`);
+    });
+    L.polyline(points.map((p) => [p.lat, p.lng]), { color: '#0f6674', weight: 2, dashArray: '5,6', opacity: 0.6 }).addTo(map);
+    map.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lng])), { padding: [24, 24] });
+  } else {
+    map.setView([20, 0], 2);
+  }
+  state.leafletMap = map;
+}
+
+function csvEscape(v) {
+  const s = String(v ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+function exportMyMapsCSV(trip) {
+  const variantLabel = (id) => { if (!id) return 'Comú'; const v = (trip.variants || []).find((x) => x.id === id); return v ? v.label : id; };
+  const rows = [['Nom', 'Latitud', 'Longitud', 'Variant', 'Dia', 'Ordre', 'Categoria', 'Descripcio']];
+  (trip.mapWaypoints || []).forEach((w) => rows.push([w.name, w.lat, w.lng, variantLabel(w.variantId), w.day, w.order, w.category, w.description]));
+  const csv = rows.map((r) => r.map(csvEscape).join(',')).join('\r\n');
+  downloadFile(`${trip.id}-mymaps.csv`, csv, 'text/csv');
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: CALENDARI
+// ════════════════════════════════════════════════════
+function pad(n) { return String(n).padStart(2, '0'); }
+function parseTimeLoose(t) {
+  if (!t) return null;
+  const m = String(t).replace('~', '').match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return { h: +m[1], m: +m[2] };
+}
+function addDaysISO(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function icsDateAllDay(dateStr) { return dateStr.replace(/-/g, ''); }
+function icsDateTimeLocal(dateStr, timeObj) { return dateStr.replace(/-/g, '') + 'T' + pad(timeObj.h) + pad(timeObj.m) + '00'; }
+function icsEscape(s) { return String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
+
+function statusBadgeFor(status) {
+  if (status === 'reservat') return { text: 'Reservat', cls: 'badge-green' };
+  if (status === 'cancel·lat') return { text: 'Cancel·lat', cls: 'badge-red' };
+  return { text: 'Opció', cls: 'badge-muted' };
+}
+function buildTripEvents(trip, variantId) {
+  const events = [];
+  (trip.itinerary || []).filter((d) => (!d.variantId || d.variantId === variantId) && d.date).forEach((d) => {
+    events.push({ kind: 'day', title: `Dia ${d.day} · ${d.location || ''}`.trim(), location: d.location, details: [d.activity, d.transit, d.lodging, d.whereToEat, d.tips].filter(Boolean).join('\n'), allDay: true, dateStart: d.date, dateEnd: addDaysISO(d.date, 1), statusBadge: null });
+  });
+  (trip.transportLegs || []).filter((l) => (!l.variantId || l.variantId === variantId) && l.dateDep).forEach((l) => {
+    const tDep = parseTimeLoose(l.timeDep);
+    const tArr = parseTimeLoose(l.timeArr);
+    const details = [l.provider, l.notes, l.bookingRef ? `Ref: ${l.bookingRef}` : ''].filter(Boolean).join('\n');
+    const title = `${legTypeLabel(l.type)} ${l.code || ''} · ${l.route || ''}`.replace(/\s+/g, ' ').trim();
+    const base = { kind: 'transport', title, location: l.route, details, statusBadge: statusBadgeFor(l.status) };
+    if (tDep) {
+      events.push({ ...base, allDay: false, dateStart: l.dateDep, timeStart: tDep, dateEnd: (l.dateArr && tArr) ? l.dateArr : l.dateDep, timeEnd: tArr || { h: (tDep.h + 2) % 24, m: tDep.m } });
+    } else {
+      events.push({ ...base, allDay: true, dateStart: l.dateDep, dateEnd: addDaysISO(l.dateDep, 1) });
+    }
+  });
+  (trip.lodging || []).filter((lg) => (!lg.variantId || lg.variantId === variantId) && lg.checkIn && lg.checkOut).forEach((lg) => {
+    events.push({ kind: 'lodging', title: `Allotjament: ${lg.name || lg.destination}`, location: lg.destination, mapsQuery: `${lg.name || ''} ${lg.destination || ''}`.trim(), details: [lg.roomConfig, lg.notes].filter(Boolean).join('\n'), allDay: true, dateStart: lg.checkIn, dateEnd: lg.checkOut, statusBadge: statusBadgeFor(lg.status) });
+  });
+  events.sort((a, b) => (a.dateStart || '').localeCompare(b.dateStart || ''));
+  return events;
+}
+function toIcsDates(ev) {
+  if (ev.allDay) return { start: icsDateAllDay(ev.dateStart), end: icsDateAllDay(ev.dateEnd), allDay: true };
+  return { start: icsDateTimeLocal(ev.dateStart, ev.timeStart), end: icsDateTimeLocal(ev.dateEnd, ev.timeEnd), allDay: false };
+}
+function toGCalDates(ev) {
+  if (ev.allDay) return `${icsDateAllDay(ev.dateStart)}/${icsDateAllDay(ev.dateEnd)}`;
+  return `${icsDateTimeLocal(ev.dateStart, ev.timeStart)}/${icsDateTimeLocal(ev.dateEnd, ev.timeEnd)}`;
+}
+function googleCalLink(ev) {
+  const params = new URLSearchParams({ action: 'TEMPLATE', text: ev.title, dates: toGCalDates(ev), details: ev.details || '', location: ev.location || '' });
+  return 'https://calendar.google.com/calendar/render?' + params.toString();
+}
+function buildICS(trip, variantId) {
+  const events = buildTripEvents(trip, variantId);
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Viatges Marine Sanchez//CA', 'CALSCALE:GREGORIAN'];
+  events.forEach((ev, i) => {
+    const d = toIcsDates(ev);
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:' + trip.id + '-' + i + '-' + Date.now() + '@viatges-marine-sanchez');
+    lines.push('SUMMARY:' + icsEscape(ev.title));
+    if (ev.location) lines.push('LOCATION:' + icsEscape(ev.location));
+    if (ev.details) lines.push('DESCRIPTION:' + icsEscape(ev.details));
+    if (d.allDay) { lines.push('DTSTART;VALUE=DATE:' + d.start); lines.push('DTEND;VALUE=DATE:' + d.end); }
+    else { lines.push('DTSTART:' + d.start); lines.push('DTEND:' + d.end); }
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+function exportICS(trip) { downloadFile(`${trip.id}.ics`, buildICS(trip, state.currentVariantId), 'text/calendar'); }
+function formatEventWhen(ev) {
+  if (ev.allDay) return formatDateHuman(ev.dateStart);
+  return `${formatDateHuman(ev.dateStart)} · ${pad(ev.timeStart.h)}:${pad(ev.timeStart.m)}`;
+}
+function renderCalendariTab(trip) {
+  const events = buildTripEvents(trip, state.currentVariantId);
+  const groups = {};
+  events.forEach((ev) => { (groups[ev.dateStart] = groups[ev.dateStart] || []).push(ev); });
+  const dayGroups = Object.keys(groups).sort().map((date) => `
+    <div class="card">
+      <h3>${formatDateHuman(date)}</h3>
+      ${groups[date].map((ev) => {
+        const mapsQuery = ev.mapsQuery || ev.location;
+        return `
+        <div class="cal-row">
+          <div>
+            <strong>${escapeHtml(ev.title)}</strong>
+            ${ev.statusBadge ? `<span class="badge ${ev.statusBadge.cls}">${ev.statusBadge.text}</span>` : ''}
+            <div class="muted">${formatEventWhen(ev)}${ev.location ? ' · ' + escapeHtml(ev.location) : ''}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            ${mapsQuery ? `<a class="btn-secondary small" href="${gmapsLink(mapsQuery)}" target="_blank" rel="noopener" title="Obrir a Google Maps">📍</a>` : ''}
+            <a class="btn-secondary small" href="${googleCalLink(ev)}" target="_blank" rel="noopener">+ Cal</a>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('') || emptyState('Res per fer seguiment encara: afegeix dies, vols o allotjaments amb dates.');
+  $('#content').innerHTML = `
+    <div class="tab-toolbar"><button class="btn" data-action="export-ics">⬇ Exportar viatge (.ics)</button></div>
+    <p class="muted small-note">El fitxer .ics es pot importar a Google Calendar (Configuració → Importar i exportar) o a qualsevol altre calendari. Les hores són locals a cada esdeveniment. El 📍 obre la ubicació a Google Maps.</p>
+    ${dayGroups}`;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: GASTRONOMIA
+// ════════════════════════════════════════════════════
+function renderGastronomiaTab(trip) {
+  const items = (trip.restaurants || []).filter((r) => !r.variantId || r.variantId === state.currentVariantId);
+  const byLoc = {};
+  items.forEach((r) => { (byLoc[r.location || '(sense destinació)'] = byLoc[r.location || '(sense destinació)'] || []).push(r); });
+  const html = Object.entries(byLoc).map(([loc, list]) => `
+    <div class="card">
+      <h3>${escapeHtml(loc)}</h3>
+      ${list.map((r) => `<div class="rest-row"><strong>${escapeHtml(r.name)}</strong> — ${escapeHtml(r.specialty)}<div class="muted">${escapeHtml(r.dish)}</div></div>`).join('')}
+    </div>`).join('') || emptyState('Sense recomanacions encara.');
+  $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-row" data-arr="restaurants">+ Afegir restaurant</button></div>${html}`;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: VIATGERS
+// ════════════════════════════════════════════════════
+function renderViatgersTab(trip) {
+  const memberIds = new Set(trip.travelerIds || []);
+  const rows = state.travelers.map((tr) => `
+    <div class="card traveler-card">
+      <label style="margin-top:0;"><input type="checkbox" data-action="toggle-trip-traveler" data-id="${tr.id}" ${memberIds.has(tr.id) ? 'checked' : ''} style="width:auto;display:inline-block;margin-right:6px;"> Participa en aquest viatge</label>
+      <div class="grid2">
+        <label>Nom<input data-entity="traveler" data-id="${tr.id}" data-field="firstName" value="${attr(tr.firstName)}"></label>
+        <label>Cognoms<input data-entity="traveler" data-id="${tr.id}" data-field="lastName" value="${attr(tr.lastName)}"></label>
+        <label>Data naixement<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="birthDate" value="${attr(tr.birthDate)}"></label>
+        <label>Nacionalitat<input data-entity="traveler" data-id="${tr.id}" data-field="nationality" value="${attr(tr.nationality)}"></label>
+        <label>Passaport<input data-entity="traveler" data-id="${tr.id}" data-field="passportNumber" value="${attr(tr.passportNumber)}"></label>
+        <label>Caducitat passaport<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="passportExpiryDate" value="${attr(tr.passportExpiryDate)}"></label>
+      </div>
+      <button class="btn-secondary small danger" data-action="delete-traveler" data-id="${tr.id}" style="margin-top:8px;">Elimina viatger</button>
+    </div>`).join('') || emptyState('Cap viatger encara.');
+  $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-traveler">+ Nou viatger</button></div>${rows}`;
+}
+
+// ════════════════════════════════════════════════════
+//  RENDER: DOCUMENTS
+// ════════════════════════════════════════════════════
+function renderDocumentsTab(trip) {
+  const items = [];
+  (trip.transportLegs || []).forEach((l, i) => (l.attachments || []).forEach((a, ai) => items.push({ source: `Transport: ${l.route || l.code || ''}`, arr: 'transportLegs', idx: i, ai, a })));
+  (trip.lodging || []).forEach((lg, i) => (lg.attachments || []).forEach((a, ai) => items.push({ source: `Allotjament: ${lg.name || ''} (${lg.destination || ''})`, arr: 'lodging', idx: i, ai, a })));
+  // Un mateix PDF pot estar adjunt a diversos trams (p.ex. els 4 vols d'un mateix bitllet) — es mostra un sol cop.
+  const byKey = new Map();
+  items.forEach((it) => {
+    const key = it.a.path || ('blob:' + it.a.blobId);
+    if (!byKey.has(key)) byKey.set(key, { ...it, sources: [it.source] });
+    else byKey.get(key).sources.push(it.source);
+  });
+  const rows = Array.from(byKey.values()).map((it) => `
+    <div class="card doc-row">
+      <div><strong>${escapeHtml(it.a.filename)}</strong><div class="muted">${escapeHtml(it.sources.join(' · '))}</div></div>
+      <div class="doc-actions">
+        <button class="btn-secondary small" data-action="open-attachment" data-arr="${it.arr}" data-idx="${it.idx}" data-ai="${it.ai}">Obrir</button>
+        <button class="icon-btn danger" data-action="delete-attachment" data-arr="${it.arr}" data-idx="${it.idx}" data-ai="${it.ai}">✕</button>
+      </div>
+    </div>`).join('') || emptyState('Encara no hi ha documents adjunts. Afegeix-ne des de Vols o Allotjament.');
+  $('#content').innerHTML = rows;
+}
+
+// ════════════════════════════════════════════════════
+//  ATTACHMENTS: FILE INPUT
+// ════════════════════════════════════════════════════
+let fileInputEl;
+function ensureFileInput() {
+  if (fileInputEl) return fileInputEl;
+  fileInputEl = document.createElement('input');
+  fileInputEl.type = 'file';
+  fileInputEl.accept = 'application/pdf';
+  fileInputEl.style.display = 'none';
+  document.body.appendChild(fileInputEl);
+  fileInputEl.addEventListener('change', async () => {
+    const file = fileInputEl.files[0];
+    if (!file || !state.pendingAttach) return;
+    const { arr, idx } = state.pendingAttach;
+    const trip = getCurrentTrip();
+    const blobId = await idbAdd('attachments', { tripId: trip.id, relatedType: arr, relatedId: idx, filename: file.name, mimeType: file.type, blob: file });
+    const item = getNestedArray(trip, arr)[idx];
+    item.attachments = item.attachments || [];
+    item.attachments.push({ filename: file.name, blobId });
+    await saveTrip(trip);
+    fileInputEl.value = '';
+    state.pendingAttach = null;
+    renderAll();
+  });
+  return fileInputEl;
+}
+async function openAttachmentByRef(arrName, idx, ai) {
+  const trip = getCurrentTrip();
+  const item = getNestedArray(trip, arrName)[idx];
+  const a = item.attachments[ai];
+  if (a.path) { window.open(a.path, '_blank'); return; }
+  if (a.blobId != null) {
+    const rec = await idbGet('attachments', a.blobId);
+    if (!rec) { alert('Adjunt no trobat.'); return; }
+    const url = URL.createObjectURL(rec.blob);
+    window.open(url, '_blank');
+  }
+}
+async function deleteAttachmentByRef(arrName, idx, ai) {
+  const trip = getCurrentTrip();
+  const item = getNestedArray(trip, arrName)[idx];
+  const a = item.attachments[ai];
+  if (a.blobId != null) await idbDelete('attachments', a.blobId);
+  item.attachments.splice(ai, 1);
+  await saveTrip(trip);
+  renderAll();
+}
+
+// ════════════════════════════════════════════════════
+//  EVENT DELEGATION
+// ════════════════════════════════════════════════════
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const trip = getCurrentTrip();
+
+  switch (action) {
+    case 'switch-tab':
+      state.tab = btn.dataset.tab;
+      renderAll();
+      break;
+    case 'switch-variant':
+      state.currentVariantId = btn.dataset.variant;
+      renderAll();
+      break;
+    case 'switch-scenario':
+      state.budgetScenario = btn.dataset.scenario;
+      renderAll();
+      break;
+    case 'create-trip': {
+      const t = newBlankTrip();
+      await saveTrip(t);
+      state.currentTripId = t.id;
+      state.currentVariantId = defaultVariantFor(t);
+      state.tab = 'itinerari';
+      renderAll();
+      break;
+    }
+    case 'delete-trip': {
+      if (state.trips.length <= 1) break;
+      if (!confirm('Eliminar aquest viatge? Aquesta acció no es pot desfer.')) break;
+      const id = btn.dataset.id;
+      await idbDelete('trips', id);
+      state.trips = state.trips.filter((t) => t.id !== id);
+      const next = state.trips.find((t) => t.isDefault) || state.trips[0];
+      state.currentTripId = next.id;
+      state.currentVariantId = defaultVariantFor(next);
+      renderAll();
+      break;
+    }
+    case 'add-row': {
+      const arrName = btn.dataset.arr;
+      getNestedArray(trip, arrName).push(newRowFor(arrName, trip));
+      await saveTrip(trip);
+      renderAll();
+      break;
+    }
+    case 'remove-row': {
+      const arrName = btn.dataset.arr;
+      const idx = +btn.dataset.idx;
+      if (arrName === 'variants') {
+        const removed = trip.variants[idx];
+        trip.variants.splice(idx, 1);
+        if (removed && removed.recommended && trip.variants.length) trip.variants[0].recommended = true;
+        if (removed && state.currentVariantId === removed.id) state.currentVariantId = defaultVariantFor(trip);
+      } else {
+        getNestedArray(trip, arrName).splice(idx, 1);
+      }
+      await saveTrip(trip);
+      renderAll();
+      break;
+    }
+    case 'add-traveler': {
+      const tr = { id: 't-' + uid(), firstName: '', lastName: '', birthDate: null, sex: '', nationality: '', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false };
+      await idbPut('travelers', tr);
+      state.travelers.push(tr);
+      if (trip) { trip.travelerIds = [...(trip.travelerIds || []), tr.id]; await saveTrip(trip); }
+      renderAll();
+      break;
+    }
+    case 'delete-traveler': {
+      if (!confirm('Eliminar aquest viatger del registre? Es traurà de tots els viatges.')) break;
+      const id = btn.dataset.id;
+      await idbDelete('travelers', id);
+      state.travelers = state.travelers.filter((t) => t.id !== id);
+      for (const tp of state.trips) {
+        let changed = false;
+        if ((tp.travelerIds || []).includes(id)) { tp.travelerIds = tp.travelerIds.filter((x) => x !== id); changed = true; }
+        (tp.familyGroups || []).forEach((g) => { if ((g.travelerIds || []).includes(id)) { g.travelerIds = g.travelerIds.filter((x) => x !== id); changed = true; } });
+        if (changed) await saveTrip(tp);
+      }
+      renderAll();
+      break;
+    }
+    case 'attach-file':
+      state.pendingAttach = { arr: btn.dataset.arr, idx: +btn.dataset.idx };
+      ensureFileInput().click();
+      break;
+    case 'open-attachment':
+      await openAttachmentByRef(btn.dataset.arr, +btn.dataset.idx, +btn.dataset.ai);
+      break;
+    case 'delete-attachment':
+      await deleteAttachmentByRef(btn.dataset.arr, +btn.dataset.idx, +btn.dataset.ai);
+      break;
+    case 'export-mymaps-csv':
+      exportMyMapsCSV(trip);
+      break;
+    case 'export-ics':
+      exportICS(trip);
+      break;
+    case 'expense-split-family': {
+      const idx = +btn.dataset.idx;
+      const g = (trip.familyGroups || []).find((x) => x.id === btn.dataset.family);
+      if (!g) break;
+      const exp = trip.expenses[idx];
+      const set = new Set(exp.splitAmong || []);
+      (g.travelerIds || []).forEach((id) => set.add(id));
+      exp.splitAmong = Array.from(set);
+      await saveTrip(trip);
+      renderAll();
+      break;
+    }
+    case 'expense-split-all': {
+      const idx = +btn.dataset.idx;
+      trip.expenses[idx].splitAmong = [...(trip.travelerIds || [])];
+      await saveTrip(trip);
+      renderAll();
+      break;
+    }
+  }
+});
+
+document.addEventListener('change', async (e) => {
+  const t = e.target;
+  const trip = getCurrentTrip();
+  if (!trip) return;
+
+  if (t.matches('[data-action="mark-recommended"]')) {
+    const v = t.dataset.variant;
+    trip.variants.forEach((x) => { x.recommended = (x.id === v); });
+    await saveTrip(trip);
+    renderAll();
+    return;
+  }
+  if (t.matches('[data-action="toggle-trip-traveler"]')) {
+    const id = t.dataset.id;
+    const set = new Set(trip.travelerIds || []);
+    if (t.checked) set.add(id); else set.delete(id);
+    trip.travelerIds = Array.from(set);
+    await saveTrip(trip);
+    renderTopbar();
+    return;
+  }
+  if (t.matches('[data-action="toggle-expense-split"]')) {
+    const idx = +t.dataset.idx;
+    const travelerId = t.dataset.traveler;
+    const exp = trip.expenses[idx];
+    const set = new Set(exp.splitAmong || []);
+    if (t.checked) set.add(travelerId); else set.delete(travelerId);
+    exp.splitAmong = Array.from(set);
+    await saveTrip(trip);
+    if (state.tab === 'despeses') renderDespesesTab(trip);
+    return;
+  }
+  if (t.matches('[data-trip-field]')) {
+    setNested(trip, t.dataset.tripField, t.value);
+    await saveTrip(trip);
+    return;
+  }
+  if (t.matches('[data-entity="traveler"][data-field]')) {
+    const tr = state.travelers.find((x) => x.id === t.dataset.id);
+    if (tr) { setNested(tr, t.dataset.field, t.value); await idbPut('travelers', tr); }
+    return;
+  }
+  if (t.matches('[data-arr][data-field]')) {
+    updateField(t.dataset.arr, +t.dataset.idx, t.dataset.field, t.value);
+    if (t.dataset.arr === 'budget.categories' && state.tab === 'pressupost') renderPressupostTab(getCurrentTrip());
+    if (t.dataset.arr === 'expenses' && state.tab === 'despeses' && (t.dataset.field === 'amount' || t.dataset.field === 'paidBy')) renderDespesesTab(getCurrentTrip());
+    return;
+  }
+});
+
+// ════════════════════════════════════════════════════
+//  START
+// ════════════════════════════════════════════════════
+boot().catch((err) => {
+  console.error(err);
+  document.getElementById('content').innerHTML = `<div class="empty-state">Error carregant l'app: ${escapeHtml(err.message || err)}</div>`;
+});
+</script>
+</body>
+</html>

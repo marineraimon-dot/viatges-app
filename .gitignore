@@ -1,0 +1,6 @@
+.DS_Store
+Thumbs.db
+
+# PDFs de bitllets/reserves amb noms complets i referencies de la familia:
+# es queden nomes en local, no es publiquen al repositori public.
+documents/
