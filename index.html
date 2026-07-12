@@ -21,6 +21,11 @@
   .trip-name-input{width:100%;background:transparent;border:none;color:#fff;font-size:20px;font-weight:700;padding:2px 0;margin-bottom:6px;}
   .trip-name-input:focus{outline:1px solid rgba(255,255,255,.5);border-radius:4px;}
   .trip-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,.9);margin-bottom:6px;}
+  .sync-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .sync-badge{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;}
+  .sync-badge.sync-error{background:var(--coral);}
+  #app.read-only-mode #topbar{background:linear-gradient(var(--teal),var(--teal) 100%);}
+  #app.read-only-mode input:disabled, #app.read-only-mode select:disabled, #app.read-only-mode textarea:disabled{opacity:.75;cursor:default;background:transparent;}
   .trip-meta-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
   .trip-meta-fields input, .trip-meta-fields select{width:100%;padding:6px 8px;border-radius:6px;border:none;font-size:12.5px;background:rgba(255,255,255,.15);color:#fff;}
   .trip-meta-fields input::placeholder{color:rgba(255,255,255,.7);}
@@ -258,7 +263,12 @@ async function doSync() {
   state.syncStatus = 'syncing';
   renderSyncBadge();
   try {
-    const payload = { travelers: state.travelers, trips: state.trips };
+    const passphrase = getPassphrase();
+    if (passphrase && !state.encryptionSalt) state.encryptionSalt = randomSaltB64();
+    const travelersForSync = await prepareTravelersForSync(state.travelers, passphrase, state.encryptionSalt);
+    const tripsForSync = [];
+    for (const t of state.trips) tripsForSync.push(await prepareTripForSync(t, passphrase, state.encryptionSalt));
+    const payload = { encryptionSalt: state.encryptionSalt || null, travelers: travelersForSync, trips: tripsForSync };
     const newSha = await pushRemoteFile(token, payload, state.remoteSha);
     state.remoteSha = newSha;
     state.syncStatus = 'synced';
@@ -275,6 +285,14 @@ async function doSync() {
 function renderSyncBadge() {
   const el = document.getElementById('syncBadge');
   if (el) el.outerHTML = syncBadgeHtml();
+}
+function passphraseBadgeHtml() {
+  const has = !!getPassphrase();
+  return `<span id="passBadge" class="sync-badge" data-action="set-passphrase" title="Contrasenya de xifrat per a passaports i dates de naixement (nomes en aquest dispositiu)">${has ? '🔐 Xifrat configurat' : '🔓 Passaports sense contrasenya'}</span>`;
+}
+function renderPassBadge() {
+  const el = document.getElementById('passBadge');
+  if (el) el.outerHTML = passphraseBadgeHtml();
 }
 function syncBadgeHtml() {
   if (!state.canEdit) return `<span id="syncBadge" class="sync-badge" data-action="set-token" title="Nomes lectura — clica per introduir el token d'edicio">👁 Lectura</span>`;
@@ -301,6 +319,100 @@ function applyReadOnlyMode() {
 }
 
 // ════════════════════════════════════════════════════
+//  XIFRAT DE DADES SENSIBLES (passaport / naixement)
+//  Web Crypto (AES-GCM + PBKDF2), 100% al navegador, sense llibreries.
+//  Sense la contrasenya de xifrat, aquests camps viatgen il·legibles
+//  dins el JSON públic de GitHub.
+// ════════════════════════════════════════════════════
+const ENC_PASSPHRASE_KEY = 'viatges_enc_passphrase';
+const SENSITIVE_TRAVELER_FIELDS = ['birthDate', 'placeOfBirth', 'passportNumber', 'passportIssueDate', 'passportExpiryDate'];
+
+function getPassphrase() { return localStorage.getItem(ENC_PASSPHRASE_KEY) || ''; }
+function setPassphrase(p) { if (p) localStorage.setItem(ENC_PASSPHRASE_KEY, p); else localStorage.removeItem(ENC_PASSPHRASE_KEY); }
+
+function b64FromBytes(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function bytesFromB64(b64) { return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); }
+function randomSaltB64() { return b64FromBytes(crypto.getRandomValues(new Uint8Array(16)).buffer); }
+
+async function deriveKey(passphrase, saltBytes) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: saltBytes, iterations: 150000, hash: 'SHA-256' },
+    keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+async function encryptPII(obj, passphrase, saltB64) {
+  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
+  const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(ciphertext), iv.length);
+  return b64FromBytes(combined.buffer);
+}
+async function decryptPII(blobB64, passphrase, saltB64) {
+  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
+  const combined = bytesFromB64(blobB64);
+  const iv = combined.slice(0, 12);
+  const ciphertext = combined.slice(12);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+async function prepareTravelersForSync(travelers, passphrase, saltB64) {
+  const out = [];
+  for (const t of travelers) {
+    const clean = { ...t };
+    if (passphrase && saltB64) {
+      const sensitive = {};
+      SENSITIVE_TRAVELER_FIELDS.forEach((f) => { sensitive[f] = clean[f] ?? null; });
+      clean.encryptedPII = await encryptPII(sensitive, passphrase, saltB64);
+    } else {
+      clean.encryptedPII = t.encryptedPII || null;
+    }
+    SENSITIVE_TRAVELER_FIELDS.forEach((f) => { clean[f] = null; });
+    out.push(clean);
+  }
+  return out;
+}
+async function decryptTravelersInPlace(travelers, passphrase, saltB64) {
+  if (!passphrase || !saltB64) return;
+  for (const t of travelers) {
+    if (t.encryptedPII) {
+      try {
+        const sensitive = await decryptPII(t.encryptedPII, passphrase, saltB64);
+        Object.assign(t, sensitive);
+      } catch (e) { /* contrasenya incorrecta o dades corruptes: es deixen en blanc */ }
+    }
+  }
+}
+// Referències de reserva (PNR) dels trams de transport: mateix tractament que el
+// passaport — amb nom + localitzador es podria consultar/modificar la reserva real.
+async function prepareTripForSync(trip, passphrase, saltB64) {
+  const clean = { ...trip, transportLegs: (trip.transportLegs || []).map((l) => ({ ...l })) };
+  for (const leg of clean.transportLegs) {
+    if (passphrase && saltB64 && leg.bookingRef) {
+      leg.encryptedBookingRef = await encryptPII({ bookingRef: leg.bookingRef }, passphrase, saltB64);
+    } else if (!(passphrase && saltB64)) {
+      leg.encryptedBookingRef = leg.encryptedBookingRef || null;
+    }
+    leg.bookingRef = '';
+  }
+  return clean;
+}
+async function decryptTripInPlace(trip, passphrase, saltB64) {
+  if (!passphrase || !saltB64) return;
+  for (const leg of (trip.transportLegs || [])) {
+    if (leg.encryptedBookingRef) {
+      try {
+        const { bookingRef } = await decryptPII(leg.encryptedBookingRef, passphrase, saltB64);
+        leg.bookingRef = bookingRef;
+      } catch (e) { /* contrasenya incorrecta o dades corruptes: es deixen en blanc */ }
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════
 //  BOOT
 // ════════════════════════════════════════════════════
 async function boot() {
@@ -317,6 +429,9 @@ async function boot() {
       trips = remote.data.trips;
       travelers = remote.data.travelers || [];
       state.remoteSha = remote.sha;
+      state.encryptionSalt = remote.data.encryptionSalt || null;
+      await decryptTravelersInPlace(travelers, getPassphrase(), state.encryptionSalt);
+      for (const trip of trips) await decryptTripInPlace(trip, getPassphrase(), state.encryptionSalt);
       for (const t of travelers) await idbPut('travelers', t);
       for (const trip of trips) await idbPut('trips', trip);
     }
@@ -471,7 +586,7 @@ function renderAll() {
   renderTopbar();
   renderTabbar();
   const trip = getCurrentTrip();
-  if (!trip) { $('#content').innerHTML = emptyState('Cap viatge. Crea’n un de nou amb el botó de dalt.'); return; }
+  if (!trip) { $('#content').innerHTML = emptyState('Cap viatge. Crea’n un de nou amb el botó de dalt.'); applyReadOnlyMode(); return; }
   switch (state.tab) {
     case 'itinerari': renderItinerariTab(trip); break;
     case 'transport': renderTransportTab(trip); break;
@@ -484,16 +599,19 @@ function renderAll() {
     case 'viatgers': renderViatgersTab(trip); break;
     case 'documents': renderDocumentsTab(trip); break;
   }
+  applyReadOnlyMode();
 }
 
 function renderTopbar() {
   const trip = getCurrentTrip();
   if (!trip) {
     $('#topbar').innerHTML = `<div class="topbar-row"><strong>Viatges Mariné Sánchez</strong>
-      <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button></div>`;
+      <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button></div>
+      <div class="sync-row">${syncBadgeHtml()}${passphraseBadgeHtml()}</div>`;
     return;
   }
   $('#topbar').innerHTML = `
+    <div class="sync-row">${syncBadgeHtml()}${passphraseBadgeHtml()}</div>
     <div class="topbar-row">
       <select id="tripSelect">${state.trips.map((t) => `<option value="${t.id}" ${t.id === trip.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}</select>
       <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button>
@@ -622,7 +740,7 @@ function renderTransportTab(trip) {
           <option value="reservat" ${l.status === 'reservat' ? 'selected' : ''}>Reservat</option>
         </select>
       </label>
-      <label>Referència de reserva<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingRef" value="${attr(l.bookingRef)}"></label>
+      <label>Referència de reserva (PNR)<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingRef" value="${attr(l.bookingRef)}" ${getPassphrase() ? '' : 'disabled placeholder="🔒 introdueix la contrasenya de xifrat"'}></label>
       <label>Enllaç de reserva<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingLink" value="${attr(l.bookingLink)}" placeholder="https://..."></label>
       ${l.bookingLink ? `<a class="btn-link" href="${attr(l.bookingLink)}" target="_blank" rel="noopener">Obrir enllaç de reserva ↗</a>` : ''}
       <label>Notes<textarea data-arr="transportLegs" data-idx="${l._idx}" data-field="notes">${escapeHtml(l.notes || '')}</textarea></label>
@@ -1039,17 +1157,21 @@ function renderGastronomiaTab(trip) {
 // ════════════════════════════════════════════════════
 function renderViatgersTab(trip) {
   const memberIds = new Set(trip.travelerIds || []);
+  const hasPass = !!getPassphrase();
+  const lockAttr = hasPass ? '' : 'disabled';
+  const lockNote = hasPass ? '' : `<div class="muted" style="margin-top:2px;">🔒 Introdueix la contrasenya de xifrat (a dalt) per veure o editar aquest camp.</div>`;
   const rows = state.travelers.map((tr) => `
     <div class="card traveler-card">
       <label style="margin-top:0;"><input type="checkbox" data-action="toggle-trip-traveler" data-id="${tr.id}" ${memberIds.has(tr.id) ? 'checked' : ''} style="width:auto;display:inline-block;margin-right:6px;"> Participa en aquest viatge</label>
       <div class="grid2">
         <label>Nom<input data-entity="traveler" data-id="${tr.id}" data-field="firstName" value="${attr(tr.firstName)}"></label>
         <label>Cognoms<input data-entity="traveler" data-id="${tr.id}" data-field="lastName" value="${attr(tr.lastName)}"></label>
-        <label>Data naixement<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="birthDate" value="${attr(tr.birthDate)}"></label>
+        <label>Data naixement<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="birthDate" value="${attr(tr.birthDate)}" ${lockAttr}></label>
         <label>Nacionalitat<input data-entity="traveler" data-id="${tr.id}" data-field="nationality" value="${attr(tr.nationality)}"></label>
-        <label>Passaport<input data-entity="traveler" data-id="${tr.id}" data-field="passportNumber" value="${attr(tr.passportNumber)}"></label>
-        <label>Caducitat passaport<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="passportExpiryDate" value="${attr(tr.passportExpiryDate)}"></label>
+        <label>Passaport<input data-entity="traveler" data-id="${tr.id}" data-field="passportNumber" value="${attr(tr.passportNumber)}" ${lockAttr}></label>
+        <label>Caducitat passaport<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="passportExpiryDate" value="${attr(tr.passportExpiryDate)}" ${lockAttr}></label>
       </div>
+      ${lockNote}
       <button class="btn-secondary small danger" data-action="delete-traveler" data-id="${tr.id}" style="margin-top:8px;">Elimina viatger</button>
     </div>`).join('') || emptyState('Cap viatger encara.');
   $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-traveler">+ Nou viatger</button></div>${rows}`;
@@ -1166,6 +1288,7 @@ document.addEventListener('click', async (e) => {
       const id = btn.dataset.id;
       await idbDelete('trips', id);
       state.trips = state.trips.filter((t) => t.id !== id);
+      scheduleSync();
       const next = state.trips.find((t) => t.isDefault) || state.trips[0];
       state.currentTripId = next.id;
       state.currentVariantId = defaultVariantFor(next);
@@ -1198,6 +1321,7 @@ document.addEventListener('click', async (e) => {
       const tr = { id: 't-' + uid(), firstName: '', lastName: '', birthDate: null, sex: '', nationality: '', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false };
       await idbPut('travelers', tr);
       state.travelers.push(tr);
+      scheduleSync();
       if (trip) { trip.travelerIds = [...(trip.travelerIds || []), tr.id]; await saveTrip(trip); }
       renderAll();
       break;
@@ -1207,6 +1331,7 @@ document.addEventListener('click', async (e) => {
       const id = btn.dataset.id;
       await idbDelete('travelers', id);
       state.travelers = state.travelers.filter((t) => t.id !== id);
+      scheduleSync();
       for (const tp of state.trips) {
         let changed = false;
         if ((tp.travelerIds || []).includes(id)) { tp.travelerIds = tp.travelerIds.filter((x) => x !== id); changed = true; }
@@ -1232,6 +1357,36 @@ document.addEventListener('click', async (e) => {
     case 'export-ics':
       exportICS(trip);
       break;
+    case 'set-token': {
+      const val = prompt('Enganxa el teu token d’accés de GitHub (només per a aquest dispositiu, no se sincronitza enlloc):', getToken());
+      if (val === null) break;
+      setToken(val.trim());
+      if (state.canEdit) {
+        try {
+          const remote = await fetchRemoteFile(getToken());
+          if (remote.data) { state.remoteSha = remote.sha; state.encryptionSalt = remote.data.encryptionSalt || state.encryptionSalt; }
+        } catch (e) { console.warn(e); }
+      }
+      renderAll();
+      break;
+    }
+    case 'retry-sync':
+      doSync();
+      break;
+    case 'reload-remote':
+      location.reload();
+      break;
+    case 'set-passphrase': {
+      const val = prompt('Contrasenya de xifrat per a passaports i dates de naixement (només per a aquest dispositiu):', getPassphrase());
+      if (val === null) break;
+      setPassphrase(val.trim());
+      await decryptTravelersInPlace(state.travelers, getPassphrase(), state.encryptionSalt);
+      for (const tp of state.trips) await decryptTripInPlace(tp, getPassphrase(), state.encryptionSalt);
+      for (const t of state.travelers) await idbPut('travelers', t);
+      for (const tp of state.trips) await idbPut('trips', tp);
+      renderAll();
+      break;
+    }
     case 'expense-split-family': {
       const idx = +btn.dataset.idx;
       const g = (trip.familyGroups || []).find((x) => x.id === btn.dataset.family);
@@ -1293,13 +1448,13 @@ document.addEventListener('change', async (e) => {
   }
   if (t.matches('[data-entity="traveler"][data-field]')) {
     const tr = state.travelers.find((x) => x.id === t.dataset.id);
-    if (tr) { setNested(tr, t.dataset.field, t.value); await idbPut('travelers', tr); }
+    if (tr) { setNested(tr, t.dataset.field, t.value); await idbPut('travelers', tr); scheduleSync(); }
     return;
   }
   if (t.matches('[data-arr][data-field]')) {
     updateField(t.dataset.arr, +t.dataset.idx, t.dataset.field, t.value);
-    if (t.dataset.arr === 'budget.categories' && state.tab === 'pressupost') renderPressupostTab(getCurrentTrip());
-    if (t.dataset.arr === 'expenses' && state.tab === 'despeses' && (t.dataset.field === 'amount' || t.dataset.field === 'paidBy')) renderDespesesTab(getCurrentTrip());
+    if (t.dataset.arr === 'budget.categories' && state.tab === 'pressupost') { renderPressupostTab(getCurrentTrip()); applyReadOnlyMode(); }
+    if (t.dataset.arr === 'expenses' && state.tab === 'despeses' && (t.dataset.field === 'amount' || t.dataset.field === 'paidBy')) { renderDespesesTab(getCurrentTrip()); applyReadOnlyMode(); }
     return;
   }
 });
