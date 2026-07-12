@@ -21,18 +21,10 @@ const SEED_TRAVELERS = [
   { id: 't7', firstName: 'Guillem', lastName: 'Sánchez Puga',   birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false },
 ];
 
-const DOC = (rel) => `documents/filipines-2026/${rel}`;
-
-const FIL_FLIGHT_ATTACHMENTS = [
-  { filename: 'VOLS.pdf', path: DOC('vols-internacionals/VOLS.pdf') },
-  { filename: 'RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf', path: DOC('vols-internacionals/RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf') },
-  { filename: 'JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf', path: DOC('vols-internacionals/JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf') },
-  { filename: 'CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf', path: DOC('vols-internacionals/CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf') },
-  { filename: 'MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf', path: DOC('vols-internacionals/MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf') },
-  { filename: 'MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf', path: DOC('vols-internacionals/MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf') },
-  { filename: 'MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf', path: DOC('vols-internacionals/MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf') },
-  { filename: 'GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf', path: DOC('vols-internacionals/GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf') },
-];
+// Els PDFs originals només existien a l'ordinador on es va crear l'app —
+// adjunta'ls de nou des de cada dispositiu amb "+ Adjuntar PDF" (queden
+// desats només localment, no es comparteixen ni se sincronitzen enlloc).
+const FIL_FLIGHT_ATTACHMENTS = [];
 
 const FILIPINES_TRIP = {
   id: 'filipines-2026',
@@ -118,7 +110,7 @@ CANVI DE DIVISA
     { id: 'leg-ey441', type: 'flight_intl', variantId: null, code: 'EY441', route: 'Manila (MNL) → Abu Dhabi (AUH)', dateDep: '2026-08-11', timeDep: '19:05', dateArr: '2026-08-12', timeArr: '00:35', provider: 'Etihad Airways', pricePerPerson: null, priceTotal: null, status: 'reservat', bookingRef: '', bookingLink: '', notes: 'Cal ser a Manila el dia 10 per garantir la connexió.', attachments: FIL_FLIGHT_ATTACHMENTS },
     { id: 'leg-ey111', type: 'flight_intl', variantId: null, code: 'EY111', route: 'Abu Dhabi (AUH) → Barcelona (BCN)', dateDep: '2026-08-12', timeDep: '02:30', dateArr: '2026-08-12', timeArr: '07:35', provider: 'Etihad Airways', pricePerPerson: null, priceTotal: null, status: 'reservat', bookingRef: '', bookingLink: '', notes: 'Arribada BCN 12 ago.', attachments: FIL_FLIGHT_ATTACHMENTS },
 
-    { id: 'leg-mnl-pps', type: 'flight_domestic', variantId: null, code: '', route: 'Manila (MNL) → Puerto Princesa (PPS)', dateDep: '2026-07-30', timeDep: '~16:30', dateArr: '2026-07-30', timeArr: '', provider: 'Cebu Pacific / PAL', pricePerPerson: 55, priceTotal: 385, status: 'reservat', bookingRef: '', bookingLink: 'https://www.cebupacificair.com/', notes: 'Factura Cebu Pacific: 33.172,72 ₱ per 7 passatgers (inclou taxes).', attachments: [{ filename: 'VOLS MANILA-PUERTO PRINCESA.pdf', path: DOC('vols-interns/VOLS MANILA-PUERTO PRINCESA.pdf') }] },
+    { id: 'leg-mnl-pps', type: 'flight_domestic', variantId: null, code: '', route: 'Manila (MNL) → Puerto Princesa (PPS)', dateDep: '2026-07-30', timeDep: '~16:30', dateArr: '2026-07-30', timeArr: '', provider: 'Cebu Pacific / PAL', pricePerPerson: 55, priceTotal: 385, status: 'reservat', bookingRef: '', bookingLink: 'https://www.cebupacificair.com/', notes: 'Factura Cebu Pacific: 33.172,72 ₱ per 7 passatgers (inclou taxes).', attachments: [] },
     { id: 'leg-usu-ceb', type: 'flight_domestic', variantId: null, code: '', route: 'Coron (USU) → Cebu (CEB)', dateDep: '2026-08-06', timeDep: '', dateArr: '2026-08-06', timeArr: '', provider: 'Cebgo / PAL / Sunlight Air', pricePerPerson: 45, priceTotal: 315, status: 'opcio', bookingRef: '', bookingLink: '', notes: '1h15 de vol.', attachments: [] },
     { id: 'leg-ceb-mnl', type: 'flight_domestic', variantId: null, code: '', route: 'Cebu (CEB) → Manila (MNL)', dateDep: '2026-08-10', timeDep: '', dateArr: '2026-08-10', timeArr: '', provider: 'Diverses (~25 vols/dia)', pricePerPerson: 50, priceTotal: 350, status: 'opcio', bookingRef: '', bookingLink: '', notes: '1h35 de vol, molta freqüència.', attachments: [] },
 

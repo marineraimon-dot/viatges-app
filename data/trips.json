@@ -4,7 +4,7 @@
                       {
                           "id":  "t1",
                           "firstName":  "Raimon",
-                          "lastName":  "MarinÃ© Bellido",
+                          "lastName":  "MarinÃƒÂ© Bellido",
                           "birthDate":  null,
                           "sex":  "M",
                           "nationality":  "Espanyola",
@@ -17,7 +17,7 @@
                       {
                           "id":  "t2",
                           "firstName":  "Judit",
-                          "lastName":  "SÃ¡nchez Guerra",
+                          "lastName":  "SÃƒÂ¡nchez Guerra",
                           "birthDate":  null,
                           "sex":  "F",
                           "nationality":  "Espanyola",
@@ -30,7 +30,7 @@
                       {
                           "id":  "t3",
                           "firstName":  "Candela",
-                          "lastName":  "MarinÃ© SÃ¡nchez",
+                          "lastName":  "MarinÃƒÂ© SÃƒÂ¡nchez",
                           "birthDate":  null,
                           "sex":  "F",
                           "nationality":  "Espanyola",
@@ -42,8 +42,8 @@
                       },
                       {
                           "id":  "t4",
-                          "firstName":  "MartÃ­",
-                          "lastName":  "MarinÃ© SÃ¡nchez",
+                          "firstName":  "MartÃƒÂ­",
+                          "lastName":  "MarinÃƒÂ© SÃƒÂ¡nchez",
                           "birthDate":  null,
                           "sex":  "M",
                           "nationality":  "Espanyola",
@@ -56,7 +56,7 @@
                       {
                           "id":  "t5",
                           "firstName":  "Mateo",
-                          "lastName":  "SÃ¡nchez Guerra",
+                          "lastName":  "SÃƒÂ¡nchez Guerra",
                           "birthDate":  null,
                           "sex":  "M",
                           "nationality":  "Espanyola",
@@ -69,7 +69,7 @@
                       {
                           "id":  "t6",
                           "firstName":  "Maia",
-                          "lastName":  "SÃ¡nchez Puga",
+                          "lastName":  "SÃƒÂ¡nchez Puga",
                           "birthDate":  null,
                           "sex":  "F",
                           "nationality":  "Espanyola",
@@ -82,7 +82,7 @@
                       {
                           "id":  "t7",
                           "firstName":  "Guillem",
-                          "lastName":  "SÃ¡nchez Puga",
+                          "lastName":  "SÃƒÂ¡nchez Puga",
                           "birthDate":  null,
                           "sex":  "M",
                           "nationality":  "Espanyola",
@@ -97,13 +97,13 @@
                   {
                       "id":  "filipines-2026",
                       "name":  "Filipines 2026",
-                      "destination":  "Palawan Â· Visayas, Filipines",
+                      "destination":  "Palawan Ã‚Â· Visayas, Filipines",
                       "status":  "confirmat",
                       "isDefault":  true,
                       "dateStart":  "2026-07-28",
                       "dateEnd":  "2026-08-12",
                       "currency":  "EUR",
-                      "notes":  "CONSELLS PRÃ€CTICS\nâ€¢ Confirma habitacions twin (dos llits) i el llit supletori del nen en reservar; a l\u0027estiu s\u0027esgoten.\nâ€¢ Variant C: el trasllat Cebuâ€“Moalboal (~3h) es fa en van privat; reserva\u0027l amb antelaciÃ³ juntament amb l\u0027excursiÃ³ a Oslob.\nâ€¢ A Moalboal el sardine run Ã©s a la platja de Panagsama, sense barca; porta escarpins i cÃ mera aquÃ tica.\nâ€¢ Agost Ã©s temporada de pluges (xÃ fecs curts a la tarda); planifica el mar al matÃ­.\nâ€¢ Porta efectiu (pesos): a moltes illes els caixers escassegen.\nâ€¢ Sigues a Manila el dia 10 (nit prÃ¨via al vol), tal com preveuen les tres variants.\nâ€¢ Regla d\u0027or (taurÃ³ balena): no tocar, no muntar, sense flaix, 1,5 m de distÃ ncia.\nâ€¢ A Bohol l\u0027alimentaciÃ³ de taurons balena estÃ  prohibida des de febrer 2025 â€” Oslob Ã©s l\u0027Ãºnic lloc amb albiraments garantits.\n\nCANVI DE DIVISA\n1 â‚¬ â‰ˆ 63 â‚± (pesos filipins). Preus consultats juliol 2026.",
+                      "notes":  "CONSELLS PRÃƒâ‚¬CTICS\nÃ¢â‚¬Â¢ Confirma habitacions twin (dos llits) i el llit supletori del nen en reservar; a l\u0027estiu s\u0027esgoten.\nÃ¢â‚¬Â¢ Variant C: el trasllat CebuÃ¢â‚¬â€œMoalboal (~3h) es fa en van privat; reserva\u0027l amb antelaciÃƒÂ³ juntament amb l\u0027excursiÃƒÂ³ a Oslob.\nÃ¢â‚¬Â¢ A Moalboal el sardine run ÃƒÂ©s a la platja de Panagsama, sense barca; porta escarpins i cÃƒÂ mera aquÃƒÂ tica.\nÃ¢â‚¬Â¢ Agost ÃƒÂ©s temporada de pluges (xÃƒÂ fecs curts a la tarda); planifica el mar al matÃƒÂ­.\nÃ¢â‚¬Â¢ Porta efectiu (pesos): a moltes illes els caixers escassegen.\nÃ¢â‚¬Â¢ Sigues a Manila el dia 10 (nit prÃƒÂ¨via al vol), tal com preveuen les tres variants.\nÃ¢â‚¬Â¢ Regla d\u0027or (taurÃƒÂ³ balena): no tocar, no muntar, sense flaix, 1,5 m de distÃƒÂ ncia.\nÃ¢â‚¬Â¢ A Bohol l\u0027alimentaciÃƒÂ³ de taurons balena estÃƒÂ  prohibida des de febrer 2025 Ã¢â‚¬â€ Oslob ÃƒÂ©s l\u0027ÃƒÂºnic lloc amb albiraments garantits.\n\nCANVI DE DIVISA\n1 Ã¢â€šÂ¬ Ã¢â€°Ë† 63 Ã¢â€šÂ± (pesos filipins). Preus consultats juliol 2026.",
                       "travelerIds":  [
                                           "t1",
                                           "t2",
@@ -116,7 +116,7 @@
                       "familyGroups":  [
                                            {
                                                "id":  "f1",
-                                               "label":  "F1 Â· MarinÃ© SÃ¡nchez",
+                                               "label":  "F1 Ã‚Â· MarinÃƒÂ© SÃƒÂ¡nchez",
                                                "travelerIds":  [
                                                                    "t1",
                                                                    "t2",
@@ -127,29 +127,29 @@
                                            },
                                            {
                                                "id":  "f2",
-                                               "label":  "F2 Â· SÃ¡nchez Puga",
+                                               "label":  "F2 Ã‚Â· SÃƒÂ¡nchez Puga",
                                                "travelerIds":  [
                                                                    "t5",
                                                                    "t6",
                                                                    "t7"
                                                                ],
-                                               "roomConfig":  "1 habitaciÃ³ triple (o doble + llit supletori)"
+                                               "roomConfig":  "1 habitaciÃƒÂ³ triple (o doble + llit supletori)"
                                            }
                                        ],
                       "variants":  [
                                        {
                                            "id":  "v-a",
-                                           "label":  "A Â· Siquijor",
+                                           "label":  "A Ã‚Â· Siquijor",
                                            "recommended":  false
                                        },
                                        {
                                            "id":  "v-b",
-                                           "label":  "B Â· Bohol",
+                                           "label":  "B Ã‚Â· Bohol",
                                            "recommended":  false
                                        },
                                        {
                                            "id":  "v-c",
-                                           "label":  "C Â· Moalboal (Cebu)",
+                                           "label":  "C Ã‚Â· Moalboal (Cebu)",
                                            "recommended":  true
                                        }
                                    ],
@@ -159,7 +159,7 @@
                                             "date":  "2026-07-28",
                                             "variantId":  null,
                                             "location":  "Vol",
-                                            "transit":  "EY114 BCN â†’ Abu Dhabi 22:30",
+                                            "transit":  "EY114 BCN Ã¢â€ â€™ Abu Dhabi 22:30",
                                             "activity":  "Vol internacional (nit al vol)",
                                             "lodging":  "Nit al vol",
                                             "whereToEat":  "",
@@ -170,20 +170,20 @@
                                             "date":  "2026-07-29",
                                             "variantId":  null,
                                             "location":  "Manila",
-                                            "transit":  "EY446 Abu Dhabi â†’ Manila (arr. 22:00)",
-                                            "activity":  "Grab NAIA â†’ hotel",
+                                            "transit":  "EY446 Abu Dhabi Ã¢â€ â€™ Manila (arr. 22:00)",
+                                            "activity":  "Grab NAIA Ã¢â€ â€™ hotel",
                                             "lodging":  "Manila (Belmont / Savoy, prop NAIA)",
                                             "whereToEat":  "",
-                                            "tips":  "Canviar â‚¬ a pesos (â‚±) a lâ€™aeroport si cal."
+                                            "tips":  "Canviar Ã¢â€šÂ¬ a pesos (Ã¢â€šÂ±) a lÃ¢â‚¬â„¢aeroport si cal."
                                         },
                                         {
                                             "day":  3,
                                             "date":  "2026-07-30",
                                             "variantId":  null,
                                             "location":  "Puerto Princesa",
-                                            "transit":  "Vol MNL â†’ PPS ~16:30",
+                                            "transit":  "Vol MNL Ã¢â€ â€™ PPS ~16:30",
                                             "activity":  "Trasllat a Palawan",
-                                            "lodging":  "Puerto Princesa (Aziza Paradise Hotel â€” reservat)",
+                                            "lodging":  "Puerto Princesa (Aziza Paradise Hotel Ã¢â‚¬â€ reservat)",
                                             "whereToEat":  "",
                                             "tips":  ""
                                         },
@@ -192,10 +192,10 @@
                                             "date":  "2026-07-31",
                                             "variantId":  null,
                                             "location":  "El Nido",
-                                            "transit":  "Van Puerto Princesa â†’ El Nido (~5h)",
+                                            "transit":  "Van Puerto Princesa Ã¢â€ â€™ El Nido (~5h)",
                                             "activity":  "Corong-Corong Beach, posta de sol",
-                                            "lodging":  "El Nido (1/3) â€” Cadlao Resort / The Nest",
-                                            "whereToEat":  "Altrove (italiÃ , pizza forn de llenya)",
+                                            "lodging":  "El Nido (1/3) Ã¢â‚¬â€ Cadlao Resort / The Nest",
+                                            "whereToEat":  "Altrove (italiÃƒÂ , pizza forn de llenya)",
                                             "tips":  ""
                                         },
                                         {
@@ -203,10 +203,10 @@
                                             "date":  "2026-08-01",
                                             "variantId":  null,
                                             "location":  "El Nido",
-                                            "transit":  "â€”",
+                                            "transit":  "Ã¢â‚¬â€",
                                             "activity":  "Tour A: Big/Small Lagoon, Shimizu, 7 Commandos",
                                             "lodging":  "El Nido (2/3)",
-                                            "whereToEat":  "La Plage (francÃ¨s-filipÃ­, peix a la brasa)",
+                                            "whereToEat":  "La Plage (francÃƒÂ¨s-filipÃƒÂ­, peix a la brasa)",
                                             "tips":  ""
                                         },
                                         {
@@ -214,7 +214,7 @@
                                             "date":  "2026-08-02",
                                             "variantId":  null,
                                             "location":  "El Nido",
-                                            "transit":  "â€”",
+                                            "transit":  "Ã¢â‚¬â€",
                                             "activity":  "Tour C (Helicopter Island, Matinloc, Secret Beach) o Nacpan Beach",
                                             "lodging":  "El Nido (3/3)",
                                             "whereToEat":  "Squidos (marisc) / Night Market Corong-Corong",
@@ -225,21 +225,21 @@
                                             "date":  "2026-08-03",
                                             "variantId":  null,
                                             "location":  "Coron",
-                                            "transit":  "Ferry El Nido â†’ Coron (~3,5-4h)",
+                                            "transit":  "Ferry El Nido Ã¢â€ â€™ Coron (~3,5-4h)",
                                             "activity":  "Mont Tapyas al capvespre",
-                                            "lodging":  "Coron (1/3) â€” Coron Soleil / Sunlight Guest",
+                                            "lodging":  "Coron (1/3) Ã¢â‚¬â€ Coron Soleil / Sunlight Guest",
                                             "whereToEat":  "Lobster House (llagosta a bon preu)",
-                                            "tips":  "Ferri rÃ pid i escÃ¨nic."
+                                            "tips":  "Ferri rÃƒÂ pid i escÃƒÂ¨nic."
                                         },
                                         {
                                             "day":  8,
                                             "date":  "2026-08-04",
                                             "variantId":  null,
                                             "location":  "Coron",
-                                            "transit":  "â€”",
+                                            "transit":  "Ã¢â‚¬â€",
                                             "activity":  "Ultimate Tour: Kayangan Lake, Twin Lagoon, Barracuda Lake, CYC Beach",
                                             "lodging":  "Coron (2/3)",
-                                            "whereToEat":  "Kawayanan Grill Station (filipÃ­ a la brasa)",
+                                            "whereToEat":  "Kawayanan Grill Station (filipÃƒÂ­ a la brasa)",
                                             "tips":  ""
                                         },
                                         {
@@ -247,7 +247,7 @@
                                             "date":  "2026-08-05",
                                             "variantId":  "v-a",
                                             "location":  "Coron",
-                                            "transit":  "â€”",
+                                            "transit":  "Ã¢â‚¬â€",
                                             "activity":  "Illes Malcapuya/Banana o busseig als naufragis WWII",
                                             "lodging":  "Coron (3/3)",
                                             "whereToEat":  "LevID\u0027s Kitchen (kare-kare)",
@@ -258,9 +258,9 @@
                                             "date":  "2026-08-06",
                                             "variantId":  "v-a",
                                             "location":  "Siquijor",
-                                            "transit":  "Vol Coron (USU) â†’ Cebu (CEB) + Sunlight Air/ferry a Siquijor",
+                                            "transit":  "Vol Coron (USU) Ã¢â€ â€™ Cebu (CEB) + Sunlight Air/ferry a Siquijor",
                                             "activity":  "Transfer interilles",
-                                            "lodging":  "Siquijor (1/4) â€” Coco Grove Beach Resort (Ã ncora: organitza Oslob i Apo)",
+                                            "lodging":  "Siquijor (1/4) Ã¢â‚¬â€ Coco Grove Beach Resort (ÃƒÂ ncora: organitza Oslob i Apo)",
                                             "whereToEat":  "Coco Grove (bufet a la platja)",
                                             "tips":  ""
                                         },
@@ -269,7 +269,7 @@
                                             "date":  "2026-08-07",
                                             "variantId":  "v-a",
                                             "location":  "Siquijor",
-                                            "transit":  "â€”",
+                                            "transit":  "Ã¢â‚¬â€",
                                             "activity":  "Volta a l\u0027illa: Cambugahay Falls, arbre balete, Paliton Beach",
                                             "lodging":  "Siquijor (2/4)",
                                             "whereToEat":  "Marco Polo (pizza de llenya al capvespre)",
@@ -280,40 +280,40 @@
                                             "date":  "2026-08-08",
                                             "variantId":  "v-a",
                                             "location":  "Siquijor",
-                                            "transit":  "ExcursiÃ³ a Oslob (via Coco Grove)",
-                                            "activity":  "TAURÃ“ BALENA a Oslob",
+                                            "transit":  "ExcursiÃƒÂ³ a Oslob (via Coco Grove)",
+                                            "activity":  "TAURÃƒâ€œ BALENA a Oslob",
                                             "lodging":  "Siquijor (3/4)",
                                             "whereToEat":  "Baha Ba\u0027 Bar (adobo + posta de sol)",
-                                            "tips":  "~95% dâ€™albirament. No tocar, no muntar, sense flaix."
+                                            "tips":  "~95% dÃ¢â‚¬â„¢albirament. No tocar, no muntar, sense flaix."
                                         },
                                         {
                                             "day":  13,
                                             "date":  "2026-08-09",
                                             "variantId":  "v-a",
                                             "location":  "Siquijor",
-                                            "transit":  "ExcursiÃ³ a Apo Island",
-                                            "activity":  "APO ISLAND â€” snorkel amb tortugues",
+                                            "transit":  "ExcursiÃƒÂ³ a Apo Island",
+                                            "activity":  "APO ISLAND Ã¢â‚¬â€ snorkel amb tortugues",
                                             "lodging":  "Siquijor (4/4)",
                                             "whereToEat":  "Monkey Business Bar",
-                                            "tips":  "Ãšltim vespre a Siquijor."
+                                            "tips":  "ÃƒÅ¡ltim vespre a Siquijor."
                                         },
                                         {
                                             "day":  14,
                                             "date":  "2026-08-10",
                                             "variantId":  "v-a",
                                             "location":  "Manila",
-                                            "transit":  "Ferry Siquijor â†’ Dumaguete + vol a Manila",
+                                            "transit":  "Ferry Siquijor Ã¢â€ â€™ Dumaguete + vol a Manila",
                                             "activity":  "Trasllat (nit de seguretat)",
                                             "lodging":  "Nit a Manila (Belmont / Savoy)",
                                             "whereToEat":  "",
-                                            "tips":  "Cal ser a Manila avui per assegurar el vol de lâ€™11."
+                                            "tips":  "Cal ser a Manila avui per assegurar el vol de lÃ¢â‚¬â„¢11."
                                         },
                                         {
                                             "day":  15,
                                             "date":  "2026-08-11",
                                             "variantId":  "v-a",
                                             "location":  "Vol",
-                                            "transit":  "EY441 Manila â†’ AUH 19:05 Â· EY111 â†’ BCN",
+                                            "transit":  "EY441 Manila Ã¢â€ â€™ AUH 19:05 Ã‚Â· EY111 Ã¢â€ â€™ BCN",
                                             "activity":  "Tornada",
                                             "lodging":  "Vol de tornada",
                                             "whereToEat":  "",
@@ -324,10 +324,10 @@
                                             "date":  "2026-08-05",
                                             "variantId":  "v-b",
                                             "location":  "Panglao",
-                                            "transit":  "Vol Coron â†’ Cebu + Cebu â†’ Tagbilaran",
-                                            "activity":  "Alona Beach (Coron: nomÃ©s 2 nits en aquesta variant)",
-                                            "lodging":  "Panglao (1/3) â€” Bohol Sunside / Henann Alona",
-                                            "whereToEat":  "Bee Farm Restaurant (orgÃ nic)",
+                                            "transit":  "Vol Coron Ã¢â€ â€™ Cebu + Cebu Ã¢â€ â€™ Tagbilaran",
+                                            "activity":  "Alona Beach (Coron: nomÃƒÂ©s 2 nits en aquesta variant)",
+                                            "lodging":  "Panglao (1/3) Ã¢â‚¬â€ Bohol Sunside / Henann Alona",
+                                            "whereToEat":  "Bee Farm Restaurant (orgÃƒÂ nic)",
                                             "tips":  ""
                                         },
                                         {
@@ -336,18 +336,18 @@
                                             "variantId":  "v-b",
                                             "location":  "Panglao",
                                             "transit":  "Illa-hopping",
-                                            "activity":  "BALICASAG (snorkel tortugues) + Virgin Island (sandbar) + dofins a lâ€™alba",
+                                            "activity":  "BALICASAG (snorkel tortugues) + Virgin Island (sandbar) + dofins a lÃ¢â‚¬â„¢alba",
                                             "lodging":  "Panglao (2/3)",
                                             "whereToEat":  "Isis Thai \u0026 Shakes",
-                                            "tips":  "Dofins a lâ€™alba, recollida matinera."
+                                            "tips":  "Dofins a lÃ¢â‚¬â„¢alba, recollida matinera."
                                         },
                                         {
                                             "day":  11,
                                             "date":  "2026-08-07",
                                             "variantId":  "v-b",
                                             "location":  "Panglao",
-                                            "transit":  "ExcursiÃ³ a Oslob (recollida ~05:00)",
-                                            "activity":  "TAURÃ“ BALENA des de Panglao (tornada ~15:00)",
+                                            "transit":  "ExcursiÃƒÂ³ a Oslob (recollida ~05:00)",
+                                            "activity":  "TAURÃƒâ€œ BALENA des de Panglao (tornada ~15:00)",
                                             "lodging":  "Panglao (3/3)",
                                             "whereToEat":  "Giuseppe Pizzeria",
                                             "tips":  "Alternativa: Chocolate Hills / tarsers."
@@ -357,18 +357,18 @@
                                             "date":  "2026-08-08",
                                             "variantId":  "v-b",
                                             "location":  "Siquijor",
-                                            "transit":  "Ferry OceanJet Tagbilaran â†’ Siquijor 15:20â€“17:00 (~1h40)",
+                                            "transit":  "Ferry OceanJet Tagbilaran Ã¢â€ â€™ Siquijor 15:20Ã¢â‚¬â€œ17:00 (~1h40)",
                                             "activity":  "Arribada a Siquijor",
-                                            "lodging":  "Siquijor (1/2) â€” Coco Grove Beach Resort",
-                                            "whereToEat":  "Alona Beach seafood (abans dâ€™agafar el ferri)",
-                                            "tips":  "Ferri directe i diari (â‚±880 turista / â‚±1.320 business)."
+                                            "lodging":  "Siquijor (1/2) Ã¢â‚¬â€ Coco Grove Beach Resort",
+                                            "whereToEat":  "Alona Beach seafood (abans dÃ¢â‚¬â„¢agafar el ferri)",
+                                            "tips":  "Ferri directe i diari (Ã¢â€šÂ±880 turista / Ã¢â€šÂ±1.320 business)."
                                         },
                                         {
                                             "day":  13,
                                             "date":  "2026-08-09",
                                             "variantId":  "v-b",
                                             "location":  "Siquijor",
-                                            "transit":  "ExcursiÃ³ a Apo Island",
+                                            "transit":  "ExcursiÃƒÂ³ a Apo Island",
                                             "activity":  "Apo Island (snorkel tortugues) + tast de la volta a l\u0027illa",
                                             "lodging":  "Siquijor (2/2)",
                                             "whereToEat":  "Baha Ba\u0027 Bar",
@@ -379,18 +379,18 @@
                                             "date":  "2026-08-10",
                                             "variantId":  "v-b",
                                             "location":  "Manila",
-                                            "transit":  "Ferry Siquijor â†’ Dumaguete + vol a Manila",
+                                            "transit":  "Ferry Siquijor Ã¢â€ â€™ Dumaguete + vol a Manila",
                                             "activity":  "Trasllat (nit de seguretat)",
                                             "lodging":  "Nit a Manila (Belmont / Savoy)",
                                             "whereToEat":  "",
-                                            "tips":  "Cal ser a Manila avui per assegurar el vol de lâ€™11."
+                                            "tips":  "Cal ser a Manila avui per assegurar el vol de lÃ¢â‚¬â„¢11."
                                         },
                                         {
                                             "day":  15,
                                             "date":  "2026-08-11",
                                             "variantId":  "v-b",
                                             "location":  "Vol",
-                                            "transit":  "EY441 Manila â†’ AUH 19:05 Â· EY111 â†’ BCN",
+                                            "transit":  "EY441 Manila Ã¢â€ â€™ AUH 19:05 Ã‚Â· EY111 Ã¢â€ â€™ BCN",
                                             "activity":  "Tornada",
                                             "lodging":  "Vol de tornada",
                                             "whereToEat":  "",
@@ -401,7 +401,7 @@
                                             "date":  "2026-08-05",
                                             "variantId":  "v-c",
                                             "location":  "Coron",
-                                            "transit":  "â€”",
+                                            "transit":  "Ã¢â‚¬â€",
                                             "activity":  "Illes Malcapuya/Banana o busseig als naufragis WWII",
                                             "lodging":  "Coron (3/3)",
                                             "whereToEat":  "Trattoria Altrove (pizza forn de llenya)",
@@ -412,9 +412,9 @@
                                             "date":  "2026-08-06",
                                             "variantId":  "v-c",
                                             "location":  "Moalboal",
-                                            "transit":  "Vol Coron (USU) â†’ Cebu (CEB) 1h15 + van ~3h per la costa",
+                                            "transit":  "Vol Coron (USU) Ã¢â€ â€™ Cebu (CEB) 1h15 + van ~3h per la costa",
                                             "activity":  "Primer snorkel al sardine run de Panagsama (capvespre)",
-                                            "lodging":  "Moalboal (1/4) â€” Kasai Village Dive Resort",
+                                            "lodging":  "Moalboal (1/4) Ã¢â‚¬â€ Kasai Village Dive Resort",
                                             "whereToEat":  "Lantaw (marisc amb vistes)",
                                             "tips":  "Cap ferry interilles en aquesta variant."
                                         },
@@ -423,8 +423,8 @@
                                             "date":  "2026-08-07",
                                             "variantId":  "v-c",
                                             "location":  "Moalboal",
-                                            "transit":  "ExcursiÃ³ a Oslob (~1-1,5h)",
-                                            "activity":  "TAURÃ“ BALENA + cascades de Tumalog",
+                                            "transit":  "ExcursiÃƒÂ³ a Oslob (~1-1,5h)",
+                                            "activity":  "TAURÃƒâ€œ BALENA + cascades de Tumalog",
                                             "lodging":  "Moalboal (2/4)",
                                             "whereToEat":  "Ven\u0027z Kitchen (adobo i sinigang)",
                                             "tips":  "Sortida matinera; nedar amb els taurons."
@@ -445,10 +445,10 @@
                                             "date":  "2026-08-09",
                                             "variantId":  "v-c",
                                             "location":  "Moalboal",
-                                            "transit":  "â€”",
+                                            "transit":  "Ã¢â‚¬â€",
                                             "activity":  "Dia lliure: snorkel des de la platja (sardines i tortugues sense barca), spa",
                                             "lodging":  "Moalboal (4/4)",
-                                            "whereToEat":  "Chili Bar / Three Bears CafÃ©",
+                                            "whereToEat":  "Chili Bar / Three Bears CafÃƒÂ©",
                                             "tips":  ""
                                         },
                                         {
@@ -456,18 +456,18 @@
                                             "date":  "2026-08-10",
                                             "variantId":  "v-c",
                                             "location":  "Manila",
-                                            "transit":  "Van Moalboal â†’ Cebu (~3h) + vol Cebu â†’ Manila (1h35, molt freqÃ¼ent)",
+                                            "transit":  "Van Moalboal Ã¢â€ â€™ Cebu (~3h) + vol Cebu Ã¢â€ â€™ Manila (1h35, molt freqÃƒÂ¼ent)",
                                             "activity":  "Trasllat (nit de seguretat)",
                                             "lodging":  "Nit a Manila (Belmont / Savoy)",
                                             "whereToEat":  "",
-                                            "tips":  "Cal ser a Manila avui per assegurar el vol de lâ€™11."
+                                            "tips":  "Cal ser a Manila avui per assegurar el vol de lÃ¢â‚¬â„¢11."
                                         },
                                         {
                                             "day":  15,
                                             "date":  "2026-08-11",
                                             "variantId":  "v-c",
                                             "location":  "Vol",
-                                            "transit":  "EY441 Manila â†’ AUH 19:05 Â· EY111 â†’ BCN",
+                                            "transit":  "EY441 Manila Ã¢â€ â€™ AUH 19:05 Ã‚Â· EY111 Ã¢â€ â€™ BCN",
                                             "activity":  "Tornada",
                                             "lodging":  "Vol de tornada",
                                             "whereToEat":  "",
@@ -480,7 +480,7 @@
                                                 "type":  "flight_intl",
                                                 "variantId":  null,
                                                 "code":  "EY114",
-                                                "route":  "Barcelona (BCN) â†’ Abu Dhabi (AUH)",
+                                                "route":  "Barcelona (BCN) Ã¢â€ â€™ Abu Dhabi (AUH)",
                                                 "dateDep":  "2026-07-28",
                                                 "timeDep":  "22:30",
                                                 "dateArr":  "2026-07-29",
@@ -491,40 +491,9 @@
                                                 "status":  "reservat",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "Anada Â· nit al vol. 1 canvi de data gratuÃ¯t per bitllet (bitllets emesos des del 6/3/2026, viatge fins 31/3/2027).",
+                                                "notes":  "Anada Ã‚Â· nit al vol. 1 canvi de data gratuÃƒÂ¯t per bitllet (bitllets emesos des del 6/3/2026, viatge fins 31/3/2027).",
                                                 "attachments":  [
-                                                                    {
-                                                                        "filename":  "VOLS.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/VOLS.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    }
+
                                                                 ]
                                             },
                                             {
@@ -532,7 +501,7 @@
                                                 "type":  "flight_intl",
                                                 "variantId":  null,
                                                 "code":  "EY446",
-                                                "route":  "Abu Dhabi (AUH) â†’ Manila (MNL)",
+                                                "route":  "Abu Dhabi (AUH) Ã¢â€ â€™ Manila (MNL)",
                                                 "dateDep":  "2026-07-29",
                                                 "timeDep":  "09:00",
                                                 "dateArr":  "2026-07-29",
@@ -545,38 +514,7 @@
                                                 "bookingLink":  "",
                                                 "notes":  "Arribada Manila 29 jul nit.",
                                                 "attachments":  [
-                                                                    {
-                                                                        "filename":  "VOLS.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/VOLS.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    }
+
                                                                 ]
                                             },
                                             {
@@ -584,7 +522,7 @@
                                                 "type":  "flight_intl",
                                                 "variantId":  null,
                                                 "code":  "EY441",
-                                                "route":  "Manila (MNL) â†’ Abu Dhabi (AUH)",
+                                                "route":  "Manila (MNL) Ã¢â€ â€™ Abu Dhabi (AUH)",
                                                 "dateDep":  "2026-08-11",
                                                 "timeDep":  "19:05",
                                                 "dateArr":  "2026-08-12",
@@ -595,40 +533,9 @@
                                                 "status":  "reservat",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "Cal ser a Manila el dia 10 per garantir la connexiÃ³.",
+                                                "notes":  "Cal ser a Manila el dia 10 per garantir la connexiÃƒÂ³.",
                                                 "attachments":  [
-                                                                    {
-                                                                        "filename":  "VOLS.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/VOLS.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    }
+
                                                                 ]
                                             },
                                             {
@@ -636,7 +543,7 @@
                                                 "type":  "flight_intl",
                                                 "variantId":  null,
                                                 "code":  "EY111",
-                                                "route":  "Abu Dhabi (AUH) â†’ Barcelona (BCN)",
+                                                "route":  "Abu Dhabi (AUH) Ã¢â€ â€™ Barcelona (BCN)",
                                                 "dateDep":  "2026-08-12",
                                                 "timeDep":  "02:30",
                                                 "dateArr":  "2026-08-12",
@@ -649,38 +556,7 @@
                                                 "bookingLink":  "",
                                                 "notes":  "Arribada BCN 12 ago.",
                                                 "attachments":  [
-                                                                    {
-                                                                        "filename":  "VOLS.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/VOLS.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/RAIMON MARINE BELLIDO 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/JUDIT SANCHEZ GUERRA 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/CANDELA MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MARTI MARINE SANCHEZ 8OVZIF 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MATEO SANCHEZ GUERRA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/MAIA SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    },
-                                                                    {
-                                                                        "filename":  "GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-internacionals/GUILLEM MASTER SANCHEZ PUGA 8OZ2QI 28JUL 2230 BCN.pdf"
-                                                                    }
+
                                                                 ]
                                             },
                                             {
@@ -688,7 +564,7 @@
                                                 "type":  "flight_domestic",
                                                 "variantId":  null,
                                                 "code":  "",
-                                                "route":  "Manila (MNL) â†’ Puerto Princesa (PPS)",
+                                                "route":  "Manila (MNL) Ã¢â€ â€™ Puerto Princesa (PPS)",
                                                 "dateDep":  "2026-07-30",
                                                 "timeDep":  "~16:30",
                                                 "dateArr":  "2026-07-30",
@@ -699,12 +575,9 @@
                                                 "status":  "reservat",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "https://www.cebupacificair.com/",
-                                                "notes":  "Factura Cebu Pacific: 33.172,72 â‚± per 7 passatgers (inclou taxes).",
+                                                "notes":  "Factura Cebu Pacific: 33.172,72 Ã¢â€šÂ± per 7 passatgers (inclou taxes).",
                                                 "attachments":  [
-                                                                    {
-                                                                        "filename":  "VOLS MANILA-PUERTO PRINCESA.pdf",
-                                                                        "path":  "documents/filipines-2026/vols-interns/VOLS MANILA-PUERTO PRINCESA.pdf"
-                                                                    }
+
                                                                 ]
                                             },
                                             {
@@ -712,7 +585,7 @@
                                                 "type":  "flight_domestic",
                                                 "variantId":  null,
                                                 "code":  "",
-                                                "route":  "Coron (USU) â†’ Cebu (CEB)",
+                                                "route":  "Coron (USU) Ã¢â€ â€™ Cebu (CEB)",
                                                 "dateDep":  "2026-08-06",
                                                 "timeDep":  "",
                                                 "dateArr":  "2026-08-06",
@@ -733,7 +606,7 @@
                                                 "type":  "flight_domestic",
                                                 "variantId":  null,
                                                 "code":  "",
-                                                "route":  "Cebu (CEB) â†’ Manila (MNL)",
+                                                "route":  "Cebu (CEB) Ã¢â€ â€™ Manila (MNL)",
                                                 "dateDep":  "2026-08-10",
                                                 "timeDep":  "",
                                                 "dateArr":  "2026-08-10",
@@ -744,7 +617,7 @@
                                                 "status":  "opcio",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "1h35 de vol, molta freqÃ¼Ã¨ncia.",
+                                                "notes":  "1h35 de vol, molta freqÃƒÂ¼ÃƒÂ¨ncia.",
                                                 "attachments":  [
 
                                                                 ]
@@ -754,7 +627,7 @@
                                                 "type":  "van",
                                                 "variantId":  null,
                                                 "code":  "",
-                                                "route":  "Puerto Princesa â†’ El Nido",
+                                                "route":  "Puerto Princesa Ã¢â€ â€™ El Nido",
                                                 "dateDep":  "2026-07-31",
                                                 "timeDep":  "",
                                                 "dateArr":  "2026-07-31",
@@ -775,18 +648,18 @@
                                                 "type":  "ferry",
                                                 "variantId":  null,
                                                 "code":  "",
-                                                "route":  "El Nido â†’ Coron",
+                                                "route":  "El Nido Ã¢â€ â€™ Coron",
                                                 "dateDep":  "2026-08-03",
                                                 "timeDep":  "",
                                                 "dateArr":  "2026-08-03",
                                                 "timeArr":  "",
-                                                "provider":  "Ferri rÃ pid",
+                                                "provider":  "Ferri rÃƒÂ pid",
                                                 "pricePerPerson":  40,
                                                 "priceTotal":  280,
                                                 "status":  "opcio",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "~4 hores, escÃ¨nic.",
+                                                "notes":  "~4 hores, escÃƒÂ¨nic.",
                                                 "attachments":  [
 
                                                                 ]
@@ -796,7 +669,7 @@
                                                 "type":  "van",
                                                 "variantId":  "v-c",
                                                 "code":  "",
-                                                "route":  "Cebu â†’ Moalboal",
+                                                "route":  "Cebu Ã¢â€ â€™ Moalboal",
                                                 "dateDep":  "2026-08-06",
                                                 "timeDep":  "",
                                                 "dateArr":  "2026-08-06",
@@ -807,7 +680,7 @@
                                                 "status":  "opcio",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "~3 hores per la costa. Reservar amb antelaciÃ³ junt amb lâ€™excursiÃ³ a Oslob.",
+                                                "notes":  "~3 hores per la costa. Reservar amb antelaciÃƒÂ³ junt amb lÃ¢â‚¬â„¢excursiÃƒÂ³ a Oslob.",
                                                 "attachments":  [
 
                                                                 ]
@@ -817,7 +690,7 @@
                                                 "type":  "ferry",
                                                 "variantId":  "v-b",
                                                 "code":  "",
-                                                "route":  "Tagbilaran (Bohol) â†’ Siquijor",
+                                                "route":  "Tagbilaran (Bohol) Ã¢â€ â€™ Siquijor",
                                                 "dateDep":  "2026-08-08",
                                                 "timeDep":  "15:20",
                                                 "dateArr":  "2026-08-08",
@@ -828,7 +701,7 @@
                                                 "status":  "opcio",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "â‚±880 turista / â‚±1.320 business. Directe i diari.",
+                                                "notes":  "Ã¢â€šÂ±880 turista / Ã¢â€šÂ±1.320 business. Directe i diari.",
                                                 "attachments":  [
 
                                                                 ]
@@ -838,7 +711,7 @@
                                                 "type":  "ferry",
                                                 "variantId":  "v-a",
                                                 "code":  "",
-                                                "route":  "Siquijor â†’ Dumaguete (ferry) + Dumaguete â†’ Manila (vol)",
+                                                "route":  "Siquijor Ã¢â€ â€™ Dumaguete (ferry) + Dumaguete Ã¢â€ â€™ Manila (vol)",
                                                 "dateDep":  "2026-08-10",
                                                 "timeDep":  "",
                                                 "dateArr":  "2026-08-10",
@@ -849,7 +722,7 @@
                                                 "status":  "opcio",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "Trasllat de seguretat per garantir el vol EY441 de lâ€™11.",
+                                                "notes":  "Trasllat de seguretat per garantir el vol EY441 de lÃ¢â‚¬â„¢11.",
                                                 "attachments":  [
 
                                                                 ]
@@ -859,7 +732,7 @@
                                                 "type":  "ferry",
                                                 "variantId":  "v-b",
                                                 "code":  "",
-                                                "route":  "Siquijor â†’ Dumaguete (ferry) + Dumaguete â†’ Manila (vol)",
+                                                "route":  "Siquijor Ã¢â€ â€™ Dumaguete (ferry) + Dumaguete Ã¢â€ â€™ Manila (vol)",
                                                 "dateDep":  "2026-08-10",
                                                 "timeDep":  "",
                                                 "dateArr":  "2026-08-10",
@@ -870,7 +743,7 @@
                                                 "status":  "opcio",
                                                 "bookingRef":  "",
                                                 "bookingLink":  "",
-                                                "notes":  "Trasllat de seguretat per garantir el vol EY441 de lâ€™11.",
+                                                "notes":  "Trasllat de seguretat per garantir el vol EY441 de lÃ¢â‚¬â„¢11.",
                                                 "attachments":  [
 
                                                                 ]
@@ -887,7 +760,7 @@
                                           "nights":  1,
                                           "checkIn":  "2026-07-29",
                                           "checkOut":  "2026-07-30",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -909,8 +782,8 @@
                                           "roomConfig":  "2 dobles i 1 triple",
                                           "status":  "reservat",
                                           "bookingLink":  "https://www.booking.com/",
-                                          "cancellationPolicy":  "CancelÂ·laciÃ³ gratuÃ¯ta abans del 27 de juliol",
-                                          "notes":  "172 â‚¬ tots Â· inclou trasllat aeroport-hotel. Vol MNL-PPS de tarda.",
+                                          "cancellationPolicy":  "CancelÃ‚Â·laciÃƒÂ³ gratuÃƒÂ¯ta abans del 27 de juliol",
+                                          "notes":  "172 Ã¢â€šÂ¬ tots Ã‚Â· inclou trasllat aeroport-hotel. Vol MNL-PPS de tarda.",
                                           "attachments":  [
 
                                                           ]
@@ -925,7 +798,7 @@
                                           "nights":  3,
                                           "checkIn":  "2026-07-31",
                                           "checkOut":  "2026-08-03",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -944,7 +817,7 @@
                                           "nights":  3,
                                           "checkIn":  "2026-08-03",
                                           "checkOut":  "2026-08-06",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -963,7 +836,7 @@
                                           "nights":  2,
                                           "checkIn":  "2026-08-03",
                                           "checkOut":  "2026-08-05",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -982,7 +855,7 @@
                                           "nights":  3,
                                           "checkIn":  "2026-08-03",
                                           "checkOut":  "2026-08-06",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -1001,11 +874,11 @@
                                           "nights":  4,
                                           "checkIn":  "2026-08-06",
                                           "checkOut":  "2026-08-10",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
-                                          "notes":  "Oslob (taurÃ³ balena) + Apo Island.",
+                                          "notes":  "Oslob (taurÃƒÂ³ balena) + Apo Island.",
                                           "attachments":  [
 
                                                           ]
@@ -1020,7 +893,7 @@
                                           "nights":  3,
                                           "checkIn":  "2026-08-05",
                                           "checkOut":  "2026-08-08",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -1039,7 +912,7 @@
                                           "nights":  2,
                                           "checkIn":  "2026-08-08",
                                           "checkOut":  "2026-08-10",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -1058,7 +931,7 @@
                                           "nights":  4,
                                           "checkIn":  "2026-08-06",
                                           "checkOut":  "2026-08-10",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
@@ -1077,11 +950,11 @@
                                           "nights":  1,
                                           "checkIn":  "2026-08-10",
                                           "checkOut":  "2026-08-11",
-                                          "roomConfig":  "F1: 2 hab. twin Â· F2: 1 hab. triple",
+                                          "roomConfig":  "F1: 2 hab. twin Ã‚Â· F2: 1 hab. triple",
                                           "status":  "opcio",
                                           "bookingLink":  "https://www.booking.com/",
                                           "cancellationPolicy":  "",
-                                          "notes":  "Nit prÃ¨via al vol EY441.",
+                                          "notes":  "Nit prÃƒÂ¨via al vol EY441.",
                                           "attachments":  [
 
                                                           ]
@@ -1093,36 +966,36 @@
                                                  "nights":  3,
                                                  "economic":  {
                                                                   "name":  "Spin Designer Hostel (family)",
-                                                                  "priceRange":  "50â€“90",
-                                                                  "notes":  "CÃ¨ntric, ambient jove-familiar"
+                                                                  "priceRange":  "50Ã¢â‚¬â€œ90",
+                                                                  "notes":  "CÃƒÂ¨ntric, ambient jove-familiar"
                                                               },
                                                  "confort":  {
                                                                  "name":  "The Nest / Cadlao Resort",
-                                                                 "priceRange":  "90â€“160",
+                                                                 "priceRange":  "90Ã¢â‚¬â€œ160",
                                                                  "notes":  "Prop del poble i la platja"
                                                              },
                                                  "premium":  {
                                                                  "name":  "Cauayan Island Resort",
-                                                                 "priceRange":  "250â€“450",
+                                                                 "priceRange":  "250Ã¢â‚¬â€œ450",
                                                                  "notes":  "Illa privada, snorkel a la porta"
                                                              }
                                              },
                                              {
                                                  "destination":  "Coron",
-                                                 "nights":  "2â€“3",
+                                                 "nights":  "2Ã¢â‚¬â€œ3",
                                                  "economic":  {
                                                                   "name":  "Coron Hilltop / Casa Alutaya",
-                                                                  "priceRange":  "45â€“80",
+                                                                  "priceRange":  "45Ã¢â‚¬â€œ80",
                                                                   "notes":  "Vistes, net i acollidor"
                                                               },
                                                  "confort":  {
                                                                  "name":  "Coron Soleil / Sunlight Guest",
-                                                                 "priceRange":  "80â€“140",
-                                                                 "notes":  "Piscina, cÃ¨ntric, familiar"
+                                                                 "priceRange":  "80Ã¢â‚¬â€œ140",
+                                                                 "notes":  "Piscina, cÃƒÂ¨ntric, familiar"
                                                              },
                                                  "premium":  {
                                                                  "name":  "Two Seasons Coron Island",
-                                                                 "priceRange":  "200â€“380",
+                                                                 "priceRange":  "200Ã¢â‚¬â€œ380",
                                                                  "notes":  "Illa privada, transfer amb llanxa"
                                                              }
                                              },
@@ -1131,18 +1004,18 @@
                                                  "nights":  "A/B",
                                                  "economic":  {
                                                                   "name":  "Baha Ba\u0027 / JJ\u0027s Backpackers",
-                                                                  "priceRange":  "40â€“75",
+                                                                  "priceRange":  "40Ã¢â‚¬â€œ75",
                                                                   "notes":  "Prop de Cambugahay"
                                                               },
                                                  "confort":  {
                                                                  "name":  "Villa Marmarine / Coco Grove",
-                                                                 "priceRange":  "70â€“130",
+                                                                 "priceRange":  "70Ã¢â‚¬â€œ130",
                                                                  "notes":  "Platja, familiar"
                                                              },
                                                  "premium":  {
                                                                  "name":  "Coco Grove Beach Resort",
-                                                                 "priceRange":  "120â€“220",
-                                                                 "notes":  "Ã€ncora: organitza Oslob i Apo Island"
+                                                                 "priceRange":  "120Ã¢â‚¬â€œ220",
+                                                                 "notes":  "Ãƒâ‚¬ncora: organitza Oslob i Apo Island"
                                                              }
                                              },
                                              {
@@ -1150,36 +1023,36 @@
                                                  "nights":  "B",
                                                  "economic":  {
                                                                   "name":  "Whitehouse by the Sea / Bathala",
-                                                                  "priceRange":  "50â€“90",
+                                                                  "priceRange":  "50Ã¢â‚¬â€œ90",
                                                                   "notes":  "Tranquil, bona nota"
                                                               },
                                                  "confort":  {
                                                                  "name":  "Bohol Sunside / Henann Alona",
-                                                                 "priceRange":  "90â€“160",
+                                                                 "priceRange":  "90Ã¢â‚¬â€œ160",
                                                                  "notes":  "Apartaments grans, piscina"
                                                              },
                                                  "premium":  {
                                                                  "name":  "Amorita Resort / Bohol Shores",
-                                                                 "priceRange":  "180â€“350",
+                                                                 "priceRange":  "180Ã¢â‚¬â€œ350",
                                                                  "notes":  "Suites familiars, sobre Alona"
                                                              }
                                              },
                                              {
                                                  "destination":  "Moalboal / Cebu",
-                                                 "nights":  "C Â· 4",
+                                                 "nights":  "C Ã‚Â· 4",
                                                  "economic":  {
                                                                   "name":  "Marina Village / Villa Belza",
-                                                                  "priceRange":  "35â€“70",
-                                                                  "notes":  "Senzill i cÃ¨ntric"
+                                                                  "priceRange":  "35Ã¢â‚¬â€œ70",
+                                                                  "notes":  "Senzill i cÃƒÂ¨ntric"
                                                               },
                                                  "confort":  {
                                                                  "name":  "Moalboal Beach Resort / Blue Abyss",
-                                                                 "priceRange":  "60â€“110",
-                                                                 "notes":  "Prop del mar, bona relaciÃ³"
+                                                                 "priceRange":  "60Ã¢â‚¬â€œ110",
+                                                                 "notes":  "Prop del mar, bona relaciÃƒÂ³"
                                                              },
                                                  "premium":  {
                                                                  "name":  "Kasai Village Dive Resort",
-                                                                 "priceRange":  "90â€“160",
+                                                                 "priceRange":  "90Ã¢â‚¬â€œ160",
                                                                  "notes":  "Piscina, prop de Panagsama"
                                                              }
                                              },
@@ -1193,7 +1066,7 @@
                                                               },
                                                  "confort":  {
                                                                  "name":  "Hue Hotel / Canvas",
-                                                                 "priceRange":  "70â€“120",
+                                                                 "priceRange":  "70Ã¢â‚¬â€œ120",
                                                                  "notes":  "Nit d\u0027arribada a Palawan"
                                                              },
                                                  "premium":  {
@@ -1212,7 +1085,7 @@
                                                               },
                                                  "confort":  {
                                                                  "name":  "Belmont / Savoy (NAIA)",
-                                                                 "priceRange":  "90â€“150",
+                                                                 "priceRange":  "90Ã¢â‚¬â€œ150",
                                                                  "notes":  "Nits del 29 jul i del 10 ago"
                                                              },
                                                  "premium":  {
@@ -1226,7 +1099,7 @@
                                          {
                                              "location":  "El Nido",
                                              "variantId":  null,
-                                             "name":  "Tour A â€” Llacunes",
+                                             "name":  "Tour A Ã¢â‚¬â€ Llacunes",
                                              "description":  "Big/Small Lagoon, Shimizu, 7 Commandos",
                                              "price":  30
                                          },
@@ -1234,7 +1107,7 @@
                                              "location":  "El Nido",
                                              "variantId":  null,
                                              "name":  "Tour C / Nacpan",
-                                             "description":  "Helicopter Island, Matinloc, Secret Beach â€” o platja de Nacpan",
+                                             "description":  "Helicopter Island, Matinloc, Secret Beach Ã¢â‚¬â€ o platja de Nacpan",
                                              "price":  30
                                          },
                                          {
@@ -1254,22 +1127,22 @@
                                          {
                                              "location":  "Oslob",
                                              "variantId":  "v-a",
-                                             "name":  "TaurÃ³ balena",
-                                             "description":  "ExcursiÃ³ dâ€™un dia des de Siquijor (via Coco Grove)",
+                                             "name":  "TaurÃƒÂ³ balena",
+                                             "description":  "ExcursiÃƒÂ³ dÃ¢â‚¬â„¢un dia des de Siquijor (via Coco Grove)",
                                              "price":  35
                                          },
                                          {
                                              "location":  "Oslob",
                                              "variantId":  "v-b",
-                                             "name":  "TaurÃ³ balena",
+                                             "name":  "TaurÃƒÂ³ balena",
                                              "description":  "Recollida ~05:00, llanxa des de Panglao, tornada ~15:00",
                                              "price":  35
                                          },
                                          {
                                              "location":  "Oslob",
                                              "variantId":  "v-c",
-                                             "name":  "TaurÃ³ balena + Tumalog Falls",
-                                             "description":  "ExcursiÃ³ dâ€™un dia des de Moalboal (~1-1,5h)",
+                                             "name":  "TaurÃƒÂ³ balena + Tumalog Falls",
+                                             "description":  "ExcursiÃƒÂ³ dÃ¢â‚¬â„¢un dia des de Moalboal (~1-1,5h)",
                                              "price":  35
                                          },
                                          {
@@ -1283,21 +1156,21 @@
                                              "location":  "Siquijor",
                                              "variantId":  "v-b",
                                              "name":  "Apo Island",
-                                             "description":  "Snorkel amb tortugues + tast de la volta a lâ€™illa",
+                                             "description":  "Snorkel amb tortugues + tast de la volta a lÃ¢â‚¬â„¢illa",
                                              "price":  null
                                          },
                                          {
                                              "location":  "Panglao",
                                              "variantId":  "v-b",
                                              "name":  "Balicasag + Virgin Island",
-                                             "description":  "Snorkel amb tortugues, sandbar, dofins a lâ€™alba",
+                                             "description":  "Snorkel amb tortugues, sandbar, dofins a lÃ¢â‚¬â„¢alba",
                                              "price":  null
                                          },
                                          {
                                              "location":  "Bohol (opcional)",
                                              "variantId":  "v-b",
                                              "name":  "Chocolate Hills / tarsers",
-                                             "description":  "Alternativa terrestre a lâ€™excursiÃ³ dâ€™Oslob",
+                                             "description":  "Alternativa terrestre a lÃ¢â‚¬â„¢excursiÃƒÂ³ dÃ¢â‚¬â„¢Oslob",
                                              "price":  null
                                          },
                                          {
@@ -1315,7 +1188,7 @@
                                              "price":  null
                                          },
                                          {
-                                             "location":  "ComÃº",
+                                             "location":  "ComÃƒÂº",
                                              "variantId":  null,
                                              "name":  "Taxes ambientals / entrades",
                                              "description":  "Ecotaxes, terminal fees",
@@ -1327,14 +1200,14 @@
                                               "location":  "El Nido",
                                               "variantId":  null,
                                               "name":  "Altrove",
-                                              "specialty":  "ItaliÃ ",
+                                              "specialty":  "ItaliÃƒÂ ",
                                               "dish":  "Pizza forn de llenya"
                                           },
                                           {
                                               "location":  "El Nido",
                                               "variantId":  null,
                                               "name":  "La Plage",
-                                              "specialty":  "FrancÃ¨s-filipÃ­",
+                                              "specialty":  "FrancÃƒÂ¨s-filipÃƒÂ­",
                                               "dish":  "Peix fresc a la brasa"
                                           },
                                           {
@@ -1362,14 +1235,14 @@
                                               "location":  "Coron",
                                               "variantId":  null,
                                               "name":  "Kawayanan Grill",
-                                              "specialty":  "FilipÃ­ a la brasa",
+                                              "specialty":  "FilipÃƒÂ­ a la brasa",
                                               "dish":  "Sinigang de gambes"
                                           },
                                           {
                                               "location":  "Coron",
                                               "variantId":  null,
                                               "name":  "LevID\u0027s Kitchen",
-                                              "specialty":  "FilipÃ­ casolÃ ",
+                                              "specialty":  "FilipÃƒÂ­ casolÃƒÂ ",
                                               "dish":  "Kare-kare"
                                           },
                                           {
@@ -1397,7 +1270,7 @@
                                               "location":  "Siquijor",
                                               "variantId":  "v-b",
                                               "name":  "Baha Ba\u0027 Bar",
-                                              "specialty":  "FusiÃ³",
+                                              "specialty":  "FusiÃƒÂ³",
                                               "dish":  "Adobo + posta de sol"
                                           },
                                           {
@@ -1405,27 +1278,27 @@
                                               "variantId":  "v-b",
                                               "name":  "Monkey Business Bar",
                                               "specialty":  "Bar-restaurant",
-                                              "dish":  "Hamburgueses i cÃ²ctels"
+                                              "dish":  "Hamburgueses i cÃƒÂ²ctels"
                                           },
                                           {
                                               "location":  "Panglao",
                                               "variantId":  "v-b",
                                               "name":  "Bee Farm Restaurant",
-                                              "specialty":  "OrgÃ nic",
+                                              "specialty":  "OrgÃƒÂ nic",
                                               "dish":  "Amanida de flors + gelat"
                                           },
                                           {
                                               "location":  "Panglao",
                                               "variantId":  "v-b",
                                               "name":  "Isis Thai \u0026 Shakes",
-                                              "specialty":  "TailandÃ¨s",
+                                              "specialty":  "TailandÃƒÂ¨s",
                                               "dish":  "Curry verd + batuts"
                                           },
                                           {
                                               "location":  "Panglao",
                                               "variantId":  "v-b",
                                               "name":  "Giuseppe Pizzeria",
-                                              "specialty":  "ItaliÃ ",
+                                              "specialty":  "ItaliÃƒÂ ",
                                               "dish":  "Pizza napolitana"
                                           },
                                           {
@@ -1446,7 +1319,7 @@
                                               "location":  "Moalboal",
                                               "variantId":  "v-c",
                                               "name":  "Ven\u0027z Kitchen",
-                                              "specialty":  "FilipÃ­ econÃ²mic",
+                                              "specialty":  "FilipÃƒÂ­ econÃƒÂ²mic",
                                               "dish":  "Adobo i sinigang"
                                           },
                                           {
@@ -1460,14 +1333,14 @@
                                               "location":  "Moalboal",
                                               "variantId":  "v-c",
                                               "name":  "Chili Bar / Three Bears",
-                                              "specialty":  "Bar-cafÃ¨",
-                                              "dish":  "CÃ²ctels i esmorzars"
+                                              "specialty":  "Bar-cafÃƒÂ¨",
+                                              "dish":  "CÃƒÂ²ctels i esmorzars"
                                           },
                                           {
                                               "location":  "Arreu",
                                               "variantId":  null,
                                               "name":  "Cuina filipina",
-                                              "specialty":  "FilipÃ­",
+                                              "specialty":  "FilipÃƒÂ­",
                                               "dish":  "Lechon, adobo, sinigang, halo-halo"
                                           }
                                       ],
@@ -1475,7 +1348,7 @@
                                      "scenarios":  [
                                                        {
                                                            "id":  "economic",
-                                                           "label":  "EconÃ²mic"
+                                                           "label":  "EconÃƒÂ²mic"
                                                        },
                                                        {
                                                            "id":  "confort",
@@ -1494,7 +1367,7 @@
                                                                                      "confort":  7000,
                                                                                      "premium":  7000
                                                                                  },
-                                                            "notes":  "1.000 â‚¬/persona Â· 7 pax"
+                                                            "notes":  "1.000 Ã¢â€šÂ¬/persona Ã‚Â· 7 pax"
                                                         },
                                                         {
                                                             "name":  "Vols interns + equipatge (3 trams)",
@@ -1515,7 +1388,7 @@
                                                             "notes":  ""
                                                         },
                                                         {
-                                                            "name":  "Allotjament Â· 3 hab. Â· 13 nits",
+                                                            "name":  "Allotjament Ã‚Â· 3 hab. Ã‚Â· 13 nits",
                                                             "valuesByScenario":  {
                                                                                      "economic":  2993,
                                                                                      "confort":  4275,
@@ -1539,10 +1412,10 @@
                                                                                      "confort":  3731,
                                                                                      "premium":  5460
                                                                                  },
-                                                            "notes":  "30 / 41 / 60 â‚¬/pers/dia"
+                                                            "notes":  "30 / 41 / 60 Ã¢â€šÂ¬/pers/dia"
                                                         },
                                                         {
-                                                            "name":  "Transport local Â· asseguranÃ§a Â· SIM Â· souvenirs",
+                                                            "name":  "Transport local Ã‚Â· asseguranÃƒÂ§a Ã‚Â· SIM Ã‚Â· souvenirs",
                                                             "valuesByScenario":  {
                                                                                      "economic":  840,
                                                                                      "confort":  1050,
@@ -1593,7 +1466,7 @@
                                                "day":  2,
                                                "order":  2,
                                                "category":  "Ciutat/Aeroport",
-                                               "description":  "Arribada EY446 29 jul 22:00 Â· nit"
+                                               "description":  "Arribada EY446 29 jul 22:00 Ã‚Â· nit"
                                            },
                                            {
                                                "name":  "Puerto Princesa",
@@ -1603,7 +1476,7 @@
                                                "day":  3,
                                                "order":  3,
                                                "category":  "Ciutat",
-                                               "description":  "Vol MNL-PPS Â· nit a Palawan"
+                                               "description":  "Vol MNL-PPS Ã‚Â· nit a Palawan"
                                            },
                                            {
                                                "name":  "El Nido (poble)",
@@ -1613,7 +1486,7 @@
                                                "day":  4,
                                                "order":  4,
                                                "category":  "Base",
-                                               "description":  "3 nits Â· island hopping"
+                                               "description":  "3 nits Ã‚Â· island hopping"
                                            },
                                            {
                                                "name":  "Big Lagoon (El Nido)",
@@ -1643,7 +1516,7 @@
                                                "day":  7,
                                                "order":  7,
                                                "category":  "Base",
-                                               "description":  "2-3 nits Â· Mont Tapyas"
+                                               "description":  "2-3 nits Ã‚Â· Mont Tapyas"
                                            },
                                            {
                                                "name":  "Kayangan Lake (Coron)",
@@ -1686,7 +1559,7 @@
                                                "description":  "Vol Coron -\u003e Cebu"
                                            },
                                            {
-                                               "name":  "Cebu (Mactan Â· CEB)",
+                                               "name":  "Cebu (Mactan Ã‚Â· CEB)",
                                                "lat":  10.3075,
                                                "lng":  123.979,
                                                "variantId":  "v-a",
@@ -1703,7 +1576,7 @@
                                                "day":  10,
                                                "order":  13,
                                                "category":  "Base",
-                                               "description":  "4 nits Â· organitza Oslob i Apo"
+                                               "description":  "4 nits Ã‚Â· organitza Oslob i Apo"
                                            },
                                            {
                                                "name":  "Cambugahay Falls (Siquijor)",
@@ -1756,7 +1629,7 @@
                                                "description":  "Ferry + vol a Manila"
                                            },
                                            {
-                                               "name":  "Cebu (Mactan Â· CEB)",
+                                               "name":  "Cebu (Mactan Ã‚Â· CEB)",
                                                "lat":  10.3075,
                                                "lng":  123.979,
                                                "variantId":  "v-b",
@@ -1843,7 +1716,7 @@
                                                "day":  12,
                                                "order":  20,
                                                "category":  "Base",
-                                               "description":  "Ferry Tagbilaran-\u003eSiquijor Â· 2 nits"
+                                               "description":  "Ferry Tagbilaran-\u003eSiquijor Ã‚Â· 2 nits"
                                            },
                                            {
                                                "name":  "Apo Island",
@@ -1866,7 +1739,7 @@
                                                "description":  "Ferry + vol a Manila"
                                            },
                                            {
-                                               "name":  "Cebu (Mactan Â· CEB)",
+                                               "name":  "Cebu (Mactan Ã‚Â· CEB)",
                                                "lat":  10.3075,
                                                "lng":  123.979,
                                                "variantId":  "v-c",
@@ -1883,7 +1756,7 @@
                                                "day":  10,
                                                "order":  13,
                                                "category":  "Base",
-                                               "description":  "4 nits Â· sardine run des de la platja"
+                                               "description":  "4 nits Ã‚Â· sardine run des de la platja"
                                            },
                                            {
                                                "name":  "Oslob - Tauro balena (Tan-awan)",
@@ -1913,7 +1786,7 @@
                                                "day":  12,
                                                "order":  16,
                                                "category":  "Estrella",
-                                               "description":  "Snorkel Â· sardines i tortugues"
+                                               "description":  "Snorkel Ã‚Â· sardines i tortugues"
                                            },
                                            {
                                                "name":  "Kawasan Falls (opcional)",
@@ -1926,7 +1799,7 @@
                                                "description":  "Canyoning"
                                            },
                                            {
-                                               "name":  "Cebu (Mactan Â· CEB)",
+                                               "name":  "Cebu (Mactan Ã‚Â· CEB)",
                                                "lat":  10.3075,
                                                "lng":  123.979,
                                                "variantId":  "v-c",

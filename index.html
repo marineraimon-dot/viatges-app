@@ -96,6 +96,14 @@
   .balance-neg{color:var(--red);font-weight:700;}
   .settle-row{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
   .settle-row:last-child{border-bottom:none;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+  @media (min-width:520px){ .modal-overlay{align-items:center;} }
+  .modal-card{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,.2);}
+  @media (min-width:520px){ .modal-card{border-radius:16px;} }
+  .modal-card h3{margin:0 0 6px;color:var(--teal-dark);}
+  .modal-card p{font-size:12.5px;color:var(--muted);margin:0 0 12px;}
+  .modal-card input{margin-bottom:10px;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -104,6 +112,7 @@
   <main id="content"></main>
   <nav id="tabbar"></nav>
 </div>
+<div id="modalRoot"></div>
 
 <script src="data-seed.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -253,44 +262,6 @@ async function pushRemoteFile(token, dataObj, sha) {
   return json.content.sha;
 }
 
-// Fitxers adjunts (PDFs de reserves) xifrats: cada un es guarda com a fitxer propi
-// dins data/attachments/, no dins el JSON principal (per no inflar-lo).
-async function pushRemoteBinary(token, path, arrayBuffer, message, existingSha) {
-  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
-  const body = { message, content: b64FromBytes(arrayBuffer), branch: GITHUB_BRANCH };
-  if (existingSha) body.sha = existingSha;
-  const resp = await fetch(url, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) { const t = await resp.text().catch(() => ''); throw new Error('Error pujant el fitxer (' + resp.status + '): ' + t); }
-  const json = await resp.json();
-  return json.content.sha;
-}
-async function fetchRemoteBinary(path) {
-  const url = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`;
-  const resp = await fetch(url, { cache: 'no-store' });
-  if (!resp.ok) throw new Error('Fitxer no trobat (' + resp.status + ')');
-  return resp.arrayBuffer();
-}
-async function fetchRemoteFileMeta(path, token) {
-  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}?ref=${GITHUB_BRANCH}`;
-  const headers = { Accept: 'application/vnd.github+json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const resp = await fetch(url, { headers });
-  if (!resp.ok) return null;
-  return resp.json();
-}
-async function deleteRemoteFile(token, path, sha) {
-  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
-  const resp = await fetch(url, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: 'Elimina adjunt', sha, branch: GITHUB_BRANCH }),
-  });
-  if (!resp.ok) console.warn('No s’ha pogut eliminar el fitxer remot a GitHub', await resp.text().catch(() => ''));
-}
 function scheduleSync() {
   if (!state.canEdit) return;
   clearTimeout(state.syncTimer);
@@ -346,6 +317,55 @@ function syncBadgeHtml() {
   const action = state.syncStatus === 'conflict' ? 'reload-remote' : (state.syncStatus === 'error' ? 'retry-sync' : 'set-token');
   return `<span id="syncBadge" class="sync-badge ${s.cls}" data-action="${action}" title="Clica per canviar el token o reintentar">${s.text}</span>`;
 }
+// ════════════════════════════════════════════════════
+//  MODAL (token / contrasenya) — formulari propi en lloc de prompt(),
+//  que no funciona bé en molts navegadors mòbils (sobretot apps afegides
+//  a la pantalla d'inici en mode standalone).
+// ════════════════════════════════════════════════════
+function closeModal() { $('#modalRoot').innerHTML = ''; }
+function openSecretModal(kind) {
+  const isToken = kind === 'token';
+  const currentVal = isToken ? getToken() : getPassphrase();
+  $('#modalRoot').innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal-card">
+        <h3>${isToken ? 'Token de GitHub' : 'Contrasenya de xifrat'}</h3>
+        <p>${isToken
+          ? 'Enganxa aquí el teu token d’accés personal de GitHub. Només es desa en aquest dispositiu (localStorage), mai s’envia enlloc més que a GitHub.'
+          : 'Contrasenya per xifrar passaports, dates de naixement, codis de reserva i PDFs adjunts. Ha de ser la mateixa a tots els teus dispositius. Només es desa en aquest dispositiu.'}</p>
+        <input id="secretModalInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${attr(currentVal)}" placeholder="${isToken ? 'ghp_... o github_pat_...' : 'la teva contrasenya'}">
+        <div class="modal-actions">
+          ${currentVal ? `<button class="btn-secondary danger" data-action="clear-secret" data-kind="${kind}">Esborra</button>` : ''}
+          <button class="btn-secondary" data-action="close-modal">Cancel·la</button>
+          <button class="btn" data-action="save-secret" data-kind="${kind}">Desa</button>
+        </div>
+      </div>
+    </div>`;
+  const input = document.getElementById('secretModalInput');
+  input.focus();
+  input.select();
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveSecretFromModal(kind); });
+}
+async function saveSecretFromModal(kind) {
+  const val = document.getElementById('secretModalInput').value.trim();
+  if (kind === 'token') {
+    setToken(val);
+    if (state.canEdit) {
+      try {
+        const remote = await fetchRemoteFile(getToken());
+        if (remote.data) { state.remoteSha = remote.sha; state.encryptionSalt = remote.data.encryptionSalt || state.encryptionSalt; }
+      } catch (e) { console.warn(e); }
+    }
+  } else {
+    setPassphrase(val);
+    await decryptTravelersInPlace(state.travelers, getPassphrase(), state.encryptionSalt);
+    for (const tp of state.trips) await decryptTripInPlace(tp, getPassphrase(), state.encryptionSalt);
+    for (const t of state.travelers) await idbPut('travelers', t);
+    for (const tp of state.trips) await idbPut('trips', tp);
+  }
+  closeModal();
+  renderAll();
+}
 function applyReadOnlyMode() {
   const app = document.getElementById('app');
   app.classList.toggle('read-only-mode', !state.canEdit);
@@ -379,28 +399,6 @@ function b64FromBytes(buf) {
 }
 function bytesFromB64(b64) { return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); }
 function randomSaltB64() { return b64FromBytes(crypto.getRandomValues(new Uint8Array(16)).buffer); }
-function guessMime(filename) {
-  const ext = String(filename || '').split('.').pop().toLowerCase();
-  return { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' }[ext] || 'application/octet-stream';
-}
-async function encryptBlob(blob, passphrase, saltB64) {
-  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const arrayBuffer = await blob.arrayBuffer();
-  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, arrayBuffer);
-  const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-  combined.set(iv, 0);
-  combined.set(new Uint8Array(ciphertext), iv.length);
-  return combined.buffer;
-}
-async function decryptToBlob(arrayBuffer, passphrase, saltB64, mimeType) {
-  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
-  const bytes = new Uint8Array(arrayBuffer);
-  const iv = bytes.slice(0, 12);
-  const ciphertext = bytes.slice(12);
-  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-  return new Blob([plain], { type: mimeType || 'application/octet-stream' });
-}
 
 async function deriveKey(passphrase, saltBytes) {
   const enc = new TextEncoder();
@@ -1287,25 +1285,12 @@ function ensureFileInput() {
     const { arr, idx } = state.pendingAttach;
     const trip = getCurrentTrip();
     const item = getNestedArray(trip, arr)[idx];
-    const passphrase = getPassphrase();
-    const token = getToken();
-    if (!passphrase) {
-      alert('Configura primer la contrasenya de xifrat (icona 🔓 a dalt) per poder adjuntar i sincronitzar PDFs entre dispositius.');
-      fileInputEl.value = ''; state.pendingAttach = null;
-      return;
-    }
-    if (!state.encryptionSalt) state.encryptionSalt = randomSaltB64();
-    const remoteId = 'att-' + uid();
-    try {
-      const encryptedBuf = await encryptBlob(file, passphrase, state.encryptionSalt);
-      if (token) await pushRemoteBinary(token, `data/attachments/${remoteId}.enc`, encryptedBuf, `Adjunta ${file.name}`, null);
-      await idbPut('attachments', { id: remoteId, filename: file.name, mimeType: file.type, blob: file });
-      item.attachments = item.attachments || [];
-      item.attachments.push({ filename: file.name, remoteId });
-      await saveTrip(trip);
-    } catch (e) {
-      alert('Error pujant el fitxer: ' + e.message);
-    }
+    // Adjunt local: es guarda només en aquest dispositiu (IndexedDB), no es puja
+    // ni es comparteix enlloc. No cal token ni contrasenya de xifrat per això.
+    const blobId = await idbAdd('attachments', { filename: file.name, mimeType: file.type, blob: file });
+    item.attachments = item.attachments || [];
+    item.attachments.push({ filename: file.name, blobId });
+    await saveTrip(trip);
     fileInputEl.value = '';
     state.pendingAttach = null;
     renderAll();
@@ -1317,24 +1302,9 @@ async function openAttachmentByRef(arrName, idx, ai) {
   const item = getNestedArray(trip, arrName)[idx];
   const a = item.attachments[ai];
   if (a.path) { window.open(a.path, '_blank'); return; }
-  if (a.remoteId) {
-    const passphrase = getPassphrase();
-    if (!passphrase) { alert('Introdueix la contrasenya de xifrat (icona a dalt) per obrir aquest adjunt.'); return; }
-    let rec = await idbGet('attachments', a.remoteId);
-    if (!rec) {
-      try {
-        const encBuf = await fetchRemoteBinary(`data/attachments/${a.remoteId}.enc`);
-        const blob = await decryptToBlob(encBuf, passphrase, state.encryptionSalt, guessMime(a.filename));
-        rec = { id: a.remoteId, filename: a.filename, mimeType: blob.type, blob };
-        await idbPut('attachments', rec);
-      } catch (e) { alert('No s’ha pogut obrir l’adjunt: ' + e.message); return; }
-    }
-    window.open(URL.createObjectURL(rec.blob), '_blank');
-    return;
-  }
   if (a.blobId != null) {
     const rec = await idbGet('attachments', a.blobId);
-    if (!rec) { alert('Adjunt no trobat.'); return; }
+    if (!rec) { alert('Aquest adjunt no és en aquest dispositiu. Torna\'l a pujar amb "+ Adjuntar PDF".'); return; }
     window.open(URL.createObjectURL(rec.blob), '_blank');
   }
 }
@@ -1342,17 +1312,8 @@ async function deleteAttachmentByRef(arrName, idx, ai) {
   const trip = getCurrentTrip();
   const item = getNestedArray(trip, arrName)[idx];
   const a = item.attachments[ai];
-  if (a.blobId != null) await idbDelete('attachments', a.blobId);
-  if (a.remoteId) {
-    await idbDelete('attachments', a.remoteId).catch(() => {});
-    const token = getToken();
-    if (token) {
-      try {
-        const path = `data/attachments/${a.remoteId}.enc`;
-        const meta = await fetchRemoteFileMeta(path, token);
-        if (meta && meta.sha) await deleteRemoteFile(token, path, meta.sha);
-      } catch (e) { console.warn('No s’ha pogut eliminar l’adjunt remot', e); }
-    }
+  if (a.blobId != null) {
+    await idbDelete('attachments', a.blobId);
   }
   item.attachments.splice(ai, 1);
   await saveTrip(trip);
@@ -1363,6 +1324,7 @@ async function deleteAttachmentByRef(arrName, idx, ai) {
 //  EVENT DELEGATION
 // ════════════════════════════════════════════════════
 document.addEventListener('click', async (e) => {
+  if (e.target.classList && e.target.classList.contains('modal-overlay')) { closeModal(); return; }
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
@@ -1465,36 +1427,29 @@ document.addEventListener('click', async (e) => {
     case 'export-ics':
       exportICS(trip);
       break;
-    case 'set-token': {
-      const val = prompt('Enganxa el teu token d’accés de GitHub (només per a aquest dispositiu, no se sincronitza enlloc):', getToken());
-      if (val === null) break;
-      setToken(val.trim());
-      if (state.canEdit) {
-        try {
-          const remote = await fetchRemoteFile(getToken());
-          if (remote.data) { state.remoteSha = remote.sha; state.encryptionSalt = remote.data.encryptionSalt || state.encryptionSalt; }
-        } catch (e) { console.warn(e); }
-      }
-      renderAll();
+    case 'set-token':
+      openSecretModal('token');
       break;
-    }
     case 'retry-sync':
       doSync();
       break;
     case 'reload-remote':
       location.reload();
       break;
-    case 'set-passphrase': {
-      const val = prompt('Contrasenya de xifrat per a passaports i dates de naixement (només per a aquest dispositiu):', getPassphrase());
-      if (val === null) break;
-      setPassphrase(val.trim());
-      await decryptTravelersInPlace(state.travelers, getPassphrase(), state.encryptionSalt);
-      for (const tp of state.trips) await decryptTripInPlace(tp, getPassphrase(), state.encryptionSalt);
-      for (const t of state.travelers) await idbPut('travelers', t);
-      for (const tp of state.trips) await idbPut('trips', tp);
+    case 'set-passphrase':
+      openSecretModal('passphrase');
+      break;
+    case 'save-secret':
+      await saveSecretFromModal(btn.dataset.kind);
+      break;
+    case 'clear-secret':
+      if (btn.dataset.kind === 'token') setToken(''); else setPassphrase('');
+      closeModal();
       renderAll();
       break;
-    }
+    case 'close-modal':
+      closeModal();
+      break;
     case 'expense-split-family': {
       const idx = +btn.dataset.idx;
       const g = (trip.familyGroups || []).find((x) => x.id === btn.dataset.family);
