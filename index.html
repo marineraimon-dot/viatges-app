@@ -32,8 +32,15 @@
   .avatars{display:flex;gap:4px;}
   .avatar{width:24px;height:24px;border-radius:50%;background:var(--coral);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
   #content{flex:1;padding:12px 12px 90px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
-  #tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:520px;display:flex;overflow-x:auto;background:#fff;border-top:1px solid var(--border);z-index:20;padding-bottom:env(safe-area-inset-bottom,0);}
-  .tabbtn{flex:1 0 auto;min-width:64px;background:none;border:none;padding:8px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--muted);cursor:pointer;}
+  #tabbar-wrap{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:520px;z-index:20;}
+  #tabbar{display:flex;overflow-x:auto;overflow-y:hidden;background:#fff;border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0);
+    -webkit-overflow-scrolling:touch;scroll-behavior:smooth;scroll-snap-type:x proximity;scrollbar-width:thin;}
+  #tabbar::-webkit-scrollbar{height:4px;}
+  #tabbar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+  .tabbar-fade{position:absolute;top:0;bottom:0;width:22px;pointer-events:none;z-index:1;}
+  .tabbar-fade-left{left:0;background:linear-gradient(to right, rgba(255,255,255,.95), rgba(255,255,255,0));}
+  .tabbar-fade-right{right:0;background:linear-gradient(to left, rgba(255,255,255,.95), rgba(255,255,255,0));}
+  .tabbtn{flex:1 0 auto;scroll-snap-align:center;min-width:66px;background:none;border:none;padding:8px 10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--muted);cursor:pointer;}
   .tabbtn span{font-size:18px;}
   .tabbtn.active{color:var(--teal);font-weight:700;}
   .tab-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
@@ -110,7 +117,11 @@
 <div id="app">
   <header id="topbar"></header>
   <main id="content"></main>
-  <nav id="tabbar"></nav>
+  <div id="tabbar-wrap">
+    <nav id="tabbar"></nav>
+    <div class="tabbar-fade tabbar-fade-left" id="tabbarFadeLeft" style="display:none;"></div>
+    <div class="tabbar-fade tabbar-fade-right" id="tabbarFadeRight" style="display:none;"></div>
+  </div>
 </div>
 <div id="modalRoot"></div>
 
@@ -709,7 +720,25 @@ function renderTopbar() {
 }
 
 function renderTabbar() {
-  $('#tabbar').innerHTML = TABS.map((t) => `<button class="tabbtn ${state.tab === t.id ? 'active' : ''}" data-action="switch-tab" data-tab="${t.id}"><span>${t.icon}</span><small>${t.label}</small></button>`).join('');
+  const tabbar = $('#tabbar');
+  tabbar.innerHTML = TABS.map((t) => `<button class="tabbtn ${state.tab === t.id ? 'active' : ''}" data-action="switch-tab" data-tab="${t.id}"><span>${t.icon}</span><small>${t.label}</small></button>`).join('');
+  updateTabbarFades();
+  if (!tabbar.dataset.scrollBound) {
+    tabbar.addEventListener('scroll', updateTabbarFades, { passive: true });
+    tabbar.dataset.scrollBound = '1';
+  }
+  const activeBtn = tabbar.querySelector('.tabbtn.active');
+  if (activeBtn) activeBtn.scrollIntoView({ block: 'nearest', inline: 'center' });
+}
+function updateTabbarFades() {
+  const tabbar = $('#tabbar');
+  if (!tabbar) return;
+  const leftFade = $('#tabbarFadeLeft');
+  const rightFade = $('#tabbarFadeRight');
+  if (!leftFade || !rightFade) return;
+  const maxScroll = tabbar.scrollWidth - tabbar.clientWidth;
+  leftFade.style.display = tabbar.scrollLeft > 4 ? 'block' : 'none';
+  rightFade.style.display = tabbar.scrollLeft < maxScroll - 4 ? 'block' : 'none';
 }
 
 // ════════════════════════════════════════════════════
