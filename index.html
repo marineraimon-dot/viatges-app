@@ -110,6 +110,15 @@ const DB_NAME = 'viatges_app_v1';
 const DB_VERSION = 1;
 let db;
 
+// GitHub com a "base de dades" compartida: tothom pot llegir data/trips.json
+// (repositori públic); només qui tingui un token pot escriure-hi (sincronitza
+// entre els teus dispositius). Sense token, l'app queda en mode només lectura.
+const GITHUB_OWNER = 'marineraimon-dot';
+const GITHUB_REPO = 'viatges-app';
+const GITHUB_BRANCH = 'main';
+const GITHUB_DATA_PATH = 'data/trips.json';
+const GITHUB_TOKEN_KEY = 'viatges_gh_token';
+
 const state = {
   trips: [],
   travelers: [],
@@ -119,6 +128,10 @@ const state = {
   budgetScenario: 'confort',
   leafletMap: null,
   pendingAttach: null,
+  canEdit: false,
+  remoteSha: null,
+  syncStatus: 'idle', // idle | syncing | synced | error | conflict | offline
+  syncTimer: null,
 };
 
 const TABS = [
@@ -190,6 +203,101 @@ async function saveTrip(trip) {
   await idbPut('trips', trip);
   const idx = state.trips.findIndex((t) => t.id === trip.id);
   if (idx >= 0) state.trips[idx] = trip; else state.trips.push(trip);
+  scheduleSync();
+}
+
+// ════════════════════════════════════════════════════
+//  SYNC AMB GITHUB (lectura pública / escriptura amb token)
+// ════════════════════════════════════════════════════
+function getToken() { return localStorage.getItem(GITHUB_TOKEN_KEY) || ''; }
+function setToken(t) {
+  if (t) localStorage.setItem(GITHUB_TOKEN_KEY, t);
+  else localStorage.removeItem(GITHUB_TOKEN_KEY);
+  state.canEdit = !!getToken();
+}
+function b64EncodeUnicode(str) { return btoa(unescape(encodeURIComponent(str))); }
+function b64DecodeUnicode(str) { return decodeURIComponent(escape(atob(str.replace(/\n/g, '')))); }
+
+async function fetchRemoteFile(token) {
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}?ref=${GITHUB_BRANCH}`;
+  const headers = { Accept: 'application/vnd.github+json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const resp = await fetch(url, { headers });
+  if (resp.status === 404) return { data: null, sha: null };
+  if (!resp.ok) throw new Error('Error de lectura a GitHub (' + resp.status + ')');
+  const json = await resp.json();
+  const data = JSON.parse(b64DecodeUnicode(json.content));
+  return { data, sha: json.sha };
+}
+async function pushRemoteFile(token, dataObj, sha) {
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
+  const body = {
+    message: 'Actualitza dades de viatges (' + new Date().toISOString() + ')',
+    content: b64EncodeUnicode(JSON.stringify(dataObj, null, 2)),
+    branch: GITHUB_BRANCH,
+  };
+  if (sha) body.sha = sha;
+  const resp = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (resp.status === 409 || resp.status === 422) { const e = new Error('conflicte'); e.conflict = true; throw e; }
+  if (!resp.ok) { const t = await resp.text().catch(() => ''); throw new Error('Error d’escriptura a GitHub (' + resp.status + '): ' + t); }
+  const json = await resp.json();
+  return json.content.sha;
+}
+function scheduleSync() {
+  if (!state.canEdit) return;
+  clearTimeout(state.syncTimer);
+  state.syncTimer = setTimeout(doSync, 2500);
+}
+async function doSync() {
+  const token = getToken();
+  if (!token) return;
+  state.syncStatus = 'syncing';
+  renderSyncBadge();
+  try {
+    const payload = { travelers: state.travelers, trips: state.trips };
+    const newSha = await pushRemoteFile(token, payload, state.remoteSha);
+    state.remoteSha = newSha;
+    state.syncStatus = 'synced';
+  } catch (e) {
+    if (e.conflict) {
+      state.syncStatus = 'conflict';
+    } else {
+      state.syncStatus = 'error';
+      console.error(e);
+    }
+  }
+  renderSyncBadge();
+}
+function renderSyncBadge() {
+  const el = document.getElementById('syncBadge');
+  if (el) el.outerHTML = syncBadgeHtml();
+}
+function syncBadgeHtml() {
+  if (!state.canEdit) return `<span id="syncBadge" class="sync-badge" data-action="set-token" title="Nomes lectura — clica per introduir el token d'edicio">👁 Lectura</span>`;
+  const map = {
+    idle: { text: '✏️ Edició', cls: '' },
+    syncing: { text: '⏳ Sincronitzant…', cls: '' },
+    synced: { text: '✅ Sincronitzat', cls: '' },
+    error: { text: '⚠️ Error de sincronització (clica)', cls: 'sync-error' },
+    conflict: { text: '⚠️ Canvis remots nous (clica per recarregar)', cls: 'sync-error' },
+  };
+  const s = map[state.syncStatus] || map.idle;
+  const action = state.syncStatus === 'conflict' ? 'reload-remote' : (state.syncStatus === 'error' ? 'retry-sync' : 'set-token');
+  return `<span id="syncBadge" class="sync-badge ${s.cls}" data-action="${action}" title="Clica per canviar el token o reintentar">${s.text}</span>`;
+}
+function applyReadOnlyMode() {
+  const app = document.getElementById('app');
+  app.classList.toggle('read-only-mode', !state.canEdit);
+  if (state.canEdit) return;
+  document.querySelectorAll('#content input, #content select, #content textarea, #topbar input, #topbar select').forEach((el) => { el.disabled = true; });
+  const mutatingActions = new Set(['add-row', 'remove-row', 'create-trip', 'delete-trip', 'add-traveler', 'delete-traveler', 'attach-file', 'delete-attachment', 'mark-recommended', 'toggle-trip-traveler', 'toggle-expense-split', 'expense-split-family', 'expense-split-all']);
+  document.querySelectorAll('[data-action]').forEach((elm) => {
+    if (mutatingActions.has(elm.dataset.action)) elm.style.display = 'none';
+  });
 }
 
 // ════════════════════════════════════════════════════
@@ -197,14 +305,39 @@ async function saveTrip(trip) {
 // ════════════════════════════════════════════════════
 async function boot() {
   db = await openDB();
-  let trips = await idbGetAll('trips');
-  let travelers = await idbGetAll('travelers');
+  state.canEdit = !!getToken();
+
+  let trips = null;
+  let travelers = null;
+
+  // 1) Intenta llegir les dades compartides de GitHub (funciona sense token, és públic)
+  try {
+    const remote = await fetchRemoteFile(getToken());
+    if (remote.data && remote.data.trips) {
+      trips = remote.data.trips;
+      travelers = remote.data.travelers || [];
+      state.remoteSha = remote.sha;
+      for (const t of travelers) await idbPut('travelers', t);
+      for (const trip of trips) await idbPut('trips', trip);
+    }
+  } catch (e) {
+    console.warn('No s’ha pogut llegir de GitHub, es fa servir la còpia local.', e);
+  }
+
+  // 2) Si no hi ha connexió (o el fitxer remot encara no existeix), fes servir la còpia local
+  if (!trips) {
+    trips = await idbGetAll('trips');
+    travelers = await idbGetAll('travelers');
+  }
+
+  // 3) Si tampoc hi ha res local (primer cop absolut), sembra amb les dades de fàbrica
   if (trips.length === 0) {
     for (const t of (window.SEED_TRAVELERS || [])) await idbPut('travelers', t);
     for (const trip of (window.SEED_TRIPS || [])) await idbPut('trips', trip);
     trips = await idbGetAll('trips');
     travelers = await idbGetAll('travelers');
   }
+
   state.trips = trips;
   state.travelers = travelers;
   const defaultTrip = trips.find((t) => t.isDefault) || trips[0];
@@ -212,6 +345,7 @@ async function boot() {
     state.currentTripId = defaultTrip.id;
     state.currentVariantId = defaultVariantFor(defaultTrip);
   }
+  window.addEventListener('online', () => { if (state.canEdit) scheduleSync(); });
   renderAll();
 }
 
