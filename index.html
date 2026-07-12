@@ -252,6 +252,45 @@ async function pushRemoteFile(token, dataObj, sha) {
   const json = await resp.json();
   return json.content.sha;
 }
+
+// Fitxers adjunts (PDFs de reserves) xifrats: cada un es guarda com a fitxer propi
+// dins data/attachments/, no dins el JSON principal (per no inflar-lo).
+async function pushRemoteBinary(token, path, arrayBuffer, message, existingSha) {
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+  const body = { message, content: b64FromBytes(arrayBuffer), branch: GITHUB_BRANCH };
+  if (existingSha) body.sha = existingSha;
+  const resp = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) { const t = await resp.text().catch(() => ''); throw new Error('Error pujant el fitxer (' + resp.status + '): ' + t); }
+  const json = await resp.json();
+  return json.content.sha;
+}
+async function fetchRemoteBinary(path) {
+  const url = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`;
+  const resp = await fetch(url, { cache: 'no-store' });
+  if (!resp.ok) throw new Error('Fitxer no trobat (' + resp.status + ')');
+  return resp.arrayBuffer();
+}
+async function fetchRemoteFileMeta(path, token) {
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}?ref=${GITHUB_BRANCH}`;
+  const headers = { Accept: 'application/vnd.github+json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const resp = await fetch(url, { headers });
+  if (!resp.ok) return null;
+  return resp.json();
+}
+async function deleteRemoteFile(token, path, sha) {
+  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${path}`;
+  const resp = await fetch(url, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Elimina adjunt', sha, branch: GITHUB_BRANCH }),
+  });
+  if (!resp.ok) console.warn('No s’ha pogut eliminar el fitxer remot a GitHub', await resp.text().catch(() => ''));
+}
 function scheduleSync() {
   if (!state.canEdit) return;
   clearTimeout(state.syncTimer);
@@ -330,9 +369,38 @@ const SENSITIVE_TRAVELER_FIELDS = ['birthDate', 'placeOfBirth', 'passportNumber'
 function getPassphrase() { return localStorage.getItem(ENC_PASSPHRASE_KEY) || ''; }
 function setPassphrase(p) { if (p) localStorage.setItem(ENC_PASSPHRASE_KEY, p); else localStorage.removeItem(ENC_PASSPHRASE_KEY); }
 
-function b64FromBytes(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function b64FromBytes(buf) {
+  // Chunked perquè String.fromCharCode(...bytes) peta amb fitxers grans (límit d'arguments del motor JS).
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  return btoa(binary);
+}
 function bytesFromB64(b64) { return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); }
 function randomSaltB64() { return b64FromBytes(crypto.getRandomValues(new Uint8Array(16)).buffer); }
+function guessMime(filename) {
+  const ext = String(filename || '').split('.').pop().toLowerCase();
+  return { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' }[ext] || 'application/octet-stream';
+}
+async function encryptBlob(blob, passphrase, saltB64) {
+  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const arrayBuffer = await blob.arrayBuffer();
+  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, arrayBuffer);
+  const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(ciphertext), iv.length);
+  return combined.buffer;
+}
+async function decryptToBlob(arrayBuffer, passphrase, saltB64, mimeType) {
+  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
+  const bytes = new Uint8Array(arrayBuffer);
+  const iv = bytes.slice(0, 12);
+  const ciphertext = bytes.slice(12);
+  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return new Blob([plain], { type: mimeType || 'application/octet-stream' });
+}
 
 async function deriveKey(passphrase, saltBytes) {
   const enc = new TextEncoder();
@@ -1218,11 +1286,26 @@ function ensureFileInput() {
     if (!file || !state.pendingAttach) return;
     const { arr, idx } = state.pendingAttach;
     const trip = getCurrentTrip();
-    const blobId = await idbAdd('attachments', { tripId: trip.id, relatedType: arr, relatedId: idx, filename: file.name, mimeType: file.type, blob: file });
     const item = getNestedArray(trip, arr)[idx];
-    item.attachments = item.attachments || [];
-    item.attachments.push({ filename: file.name, blobId });
-    await saveTrip(trip);
+    const passphrase = getPassphrase();
+    const token = getToken();
+    if (!passphrase) {
+      alert('Configura primer la contrasenya de xifrat (icona 🔓 a dalt) per poder adjuntar i sincronitzar PDFs entre dispositius.');
+      fileInputEl.value = ''; state.pendingAttach = null;
+      return;
+    }
+    if (!state.encryptionSalt) state.encryptionSalt = randomSaltB64();
+    const remoteId = 'att-' + uid();
+    try {
+      const encryptedBuf = await encryptBlob(file, passphrase, state.encryptionSalt);
+      if (token) await pushRemoteBinary(token, `data/attachments/${remoteId}.enc`, encryptedBuf, `Adjunta ${file.name}`, null);
+      await idbPut('attachments', { id: remoteId, filename: file.name, mimeType: file.type, blob: file });
+      item.attachments = item.attachments || [];
+      item.attachments.push({ filename: file.name, remoteId });
+      await saveTrip(trip);
+    } catch (e) {
+      alert('Error pujant el fitxer: ' + e.message);
+    }
     fileInputEl.value = '';
     state.pendingAttach = null;
     renderAll();
@@ -1234,11 +1317,25 @@ async function openAttachmentByRef(arrName, idx, ai) {
   const item = getNestedArray(trip, arrName)[idx];
   const a = item.attachments[ai];
   if (a.path) { window.open(a.path, '_blank'); return; }
+  if (a.remoteId) {
+    const passphrase = getPassphrase();
+    if (!passphrase) { alert('Introdueix la contrasenya de xifrat (icona a dalt) per obrir aquest adjunt.'); return; }
+    let rec = await idbGet('attachments', a.remoteId);
+    if (!rec) {
+      try {
+        const encBuf = await fetchRemoteBinary(`data/attachments/${a.remoteId}.enc`);
+        const blob = await decryptToBlob(encBuf, passphrase, state.encryptionSalt, guessMime(a.filename));
+        rec = { id: a.remoteId, filename: a.filename, mimeType: blob.type, blob };
+        await idbPut('attachments', rec);
+      } catch (e) { alert('No s’ha pogut obrir l’adjunt: ' + e.message); return; }
+    }
+    window.open(URL.createObjectURL(rec.blob), '_blank');
+    return;
+  }
   if (a.blobId != null) {
     const rec = await idbGet('attachments', a.blobId);
     if (!rec) { alert('Adjunt no trobat.'); return; }
-    const url = URL.createObjectURL(rec.blob);
-    window.open(url, '_blank');
+    window.open(URL.createObjectURL(rec.blob), '_blank');
   }
 }
 async function deleteAttachmentByRef(arrName, idx, ai) {
@@ -1246,6 +1343,17 @@ async function deleteAttachmentByRef(arrName, idx, ai) {
   const item = getNestedArray(trip, arrName)[idx];
   const a = item.attachments[ai];
   if (a.blobId != null) await idbDelete('attachments', a.blobId);
+  if (a.remoteId) {
+    await idbDelete('attachments', a.remoteId).catch(() => {});
+    const token = getToken();
+    if (token) {
+      try {
+        const path = `data/attachments/${a.remoteId}.enc`;
+        const meta = await fetchRemoteFileMeta(path, token);
+        if (meta && meta.sha) await deleteRemoteFile(token, path, meta.sha);
+      } catch (e) { console.warn('No s’ha pogut eliminar l’adjunt remot', e); }
+    }
+  }
   item.attachments.splice(ai, 1);
   await saveTrip(trip);
   renderAll();
