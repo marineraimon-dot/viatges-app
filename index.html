@@ -34,13 +34,14 @@
   #content{flex:1;padding:12px 12px 90px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
   #tabbar-wrap{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:520px;z-index:20;}
   #tabbar{display:flex;overflow-x:auto;overflow-y:hidden;background:#fff;border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom,0);
-    -webkit-overflow-scrolling:touch;scroll-behavior:smooth;scroll-snap-type:x proximity;scrollbar-width:thin;}
+    -webkit-overflow-scrolling:touch;scroll-behavior:smooth;scroll-snap-type:x proximity;scrollbar-width:thin;
+    touch-action:pan-x;overscroll-behavior-x:contain;transform:translateZ(0);will-change:scroll-position;}
   #tabbar::-webkit-scrollbar{height:4px;}
   #tabbar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
   .tabbar-fade{position:absolute;top:0;bottom:0;width:22px;pointer-events:none;z-index:1;}
   .tabbar-fade-left{left:0;background:linear-gradient(to right, rgba(255,255,255,.95), rgba(255,255,255,0));}
   .tabbar-fade-right{right:0;background:linear-gradient(to left, rgba(255,255,255,.95), rgba(255,255,255,0));}
-  .tabbtn{flex:1 0 auto;scroll-snap-align:center;min-width:66px;background:none;border:none;padding:8px 10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--muted);cursor:pointer;}
+  .tabbtn{flex:1 0 auto;scroll-snap-align:center;min-width:66px;background:none;border:none;padding:8px 10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--muted);cursor:pointer;touch-action:pan-x;}
   .tabbtn span{font-size:18px;}
   .tabbtn.active{color:var(--teal);font-weight:700;}
   .tab-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
