@@ -1,0 +1,13 @@
+{
+  "name": "Viatges Mariné Sánchez",
+  "short_name": "Viatges",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f4ef",
+  "theme_color": "#0f6674",
+  "lang": "ca",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

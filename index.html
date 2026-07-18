@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Viatges Mariné Sánchez</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#0f6674">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Viatges">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
   :root{
@@ -99,6 +106,12 @@
   .balance-neg{color:var(--red);font-weight:700;}
   .settle-row{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
   .settle-row:last-child{border-bottom:none;}
+  .passport-warning{font-size:12.5px;font-weight:600;padding:6px 8px;border-radius:6px;margin-bottom:8px;}
+  .passport-warning-soon{background:#fff4e0;color:#8a5a00;}
+  .passport-warning-expired{background:var(--red-bg);color:var(--red);}
+  .today-card{border:2px solid var(--coral);background:#fff8f5;}
+  .today-card-head{font-weight:700;color:var(--coral);margin-bottom:6px;font-size:13px;letter-spacing:.3px;}
+  .today-card div{margin-bottom:4px;font-size:13.5px;}
 </style>
 </head>
 <body>
@@ -200,6 +213,13 @@ function idbDelete(store, key) {
     req.onerror = (e) => reject(e.target.error);
   });
 }
+function idbClearAll(store) {
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(store, 'readwrite').objectStore(store).clear();
+    req.onsuccess = () => resolve();
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
 
 async function saveTrip(trip) {
   await idbPut('trips', trip);
@@ -272,6 +292,22 @@ function lodgingStatusLabel(s) { return { reservat: 'Reservat', opcio: 'Opció',
 function legTypeLabel(t) {
   return { flight_intl: '✈ Vol internacional', flight_domestic: '✈ Vol intern', ferry: '⛴ Ferri', van: '🚐 Trasllat', car_rental: '🚗 Cotxe de lloguer', parking: '🅿️ Pàrquing', excursio: '🎟️ Excursió / activitat', other: 'Transport' }[t] || 'Transport';
 }
+function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+// Molts països exigeixen el passaport vàlid uns mesos més enllà del final del viatge.
+const PASSPORT_VALIDITY_BUFFER_MONTHS = 6;
+function passportExpiryWarning(tr, trip) {
+  if (!tr.passportExpiryDate) return null;
+  const exp = new Date(tr.passportExpiryDate + 'T00:00:00');
+  if (isNaN(exp)) return null;
+  const refDateStr = (trip && (trip.dateEnd || trip.dateStart)) || null;
+  const ref = refDateStr ? new Date(refDateStr + 'T00:00:00') : new Date();
+  if (isNaN(ref)) return null;
+  if (exp < ref) return { level: 'expired', text: `⚠️ Passaport CADUCAT (${formatDateHuman(tr.passportExpiryDate)})` };
+  const bufferDate = new Date(ref);
+  bufferDate.setMonth(bufferDate.getMonth() + PASSPORT_VALIDITY_BUFFER_MONTHS);
+  if (exp < bufferDate) return { level: 'soon', text: `⚠️ Caduca el ${formatDateHuman(tr.passportExpiryDate)} — molts països exigeixen ≥${PASSPORT_VALIDITY_BUFFER_MONTHS} mesos de vigència des del final del viatge` };
+  return null;
+}
 function gmapsLink(query, lat, lng) {
   if (lat !== null && lat !== undefined && lat !== '' && lng !== null && lng !== undefined && lng !== '') {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lat + ',' + lng)}`;
@@ -327,7 +363,7 @@ function newRowFor(arrName, trip) {
     case 'variants':
       return { id: 'v-' + uid(), label: 'Nova variant', recommended: false };
     case 'expenses':
-      return { id: 'exp-' + uid(), date: '', description: '', amount: null, paidBy: (trip.travelerIds || [])[0] || null, splitAmong: [...(trip.travelerIds || [])], category: '', notes: '' };
+      return { id: 'exp-' + uid(), date: '', description: '', amount: null, currency: 'EUR', foreignAmount: null, fxRate: null, paidBy: (trip.travelerIds || [])[0] || null, splitAmong: [...(trip.travelerIds || [])], category: '', notes: '' };
     default:
       return {};
   }
@@ -447,6 +483,19 @@ function renderVariantsManager(trip) {
   </div>`;
 }
 
+function renderTodayWidget(trip) {
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const day = (trip.itinerary || []).find((d) => d.date === todayISO && (!d.variantId || d.variantId === state.currentVariantId));
+  if (!day) return '';
+  return `<div class="card today-card">
+    <div class="today-card-head">📍 AVUI — Dia ${day.day} (${formatDateHuman(day.date)})</div>
+    ${day.location ? `<div><strong>${escapeHtml(day.location)}</strong></div>` : ''}
+    ${day.transit ? `<div class="muted">🚐 ${escapeHtml(day.transit)}</div>` : ''}
+    ${day.activity ? `<div>${escapeHtml(day.activity)}</div>` : ''}
+    ${day.lodging ? `<div class="muted">🛏 ${escapeHtml(day.lodging)}</div>` : ''}
+    ${day.whereToEat ? `<div class="muted">🍽 ${escapeHtml(day.whereToEat)}</div>` : ''}
+  </div>`;
+}
 function renderItinerariTab(trip) {
   const hasVariants = (trip.variants || []).length > 1;
   const variantPills = (trip.variants && trip.variants.length) ? `<div class="pills">${trip.variants.map((v) => `
@@ -474,6 +523,7 @@ function renderItinerariTab(trip) {
     </div>`;
   }).join('') || emptyState('Encara no hi ha dies a l’itinerari.');
   $('#content').innerHTML = `
+    ${renderTodayWidget(trip)}
     ${renderVariantsManager(trip)}
     <div class="tab-toolbar">${variantPills}<button class="btn" data-action="add-row" data-arr="itinerary">+ Afegir dia</button></div>
     ${cards}`;
@@ -596,6 +646,17 @@ function renderAllotjamentTab(trip) {
 // ════════════════════════════════════════════════════
 //  RENDER: PRESSUPOST
 // ════════════════════════════════════════════════════
+function expenseTotalForCategory(trip, categoryName) {
+  const key = normalizeNameForMatch(categoryName);
+  if (!key) return 0;
+  // Coincidència flexible: les categories del pressupost solen ser noms llargs i
+  // descriptius ("Menjar i begudes (13 dies)") mentre que les despeses fan servir
+  // noms curts i genèrics ("Menjar") del desplegable — cal que un contingui l'altre.
+  return (trip.expenses || []).filter((e) => {
+    const ek = normalizeNameForMatch(e.category || '');
+    return ek && (key.includes(ek) || ek.includes(key));
+  }).reduce((s, e) => s + (Number(e.amount) || 0), 0);
+}
 function renderPressupostTab(trip) {
   const scenarios = trip.budget.scenarios;
   if (!scenarios.length) { $('#content').innerHTML = emptyState('Aquest viatge encara no té escenaris de pressupost.'); return; }
@@ -604,15 +665,23 @@ function renderPressupostTab(trip) {
   const totals = {};
   scenarios.forEach((s) => { totals[s.id] = cats.reduce((sum, c) => sum + (Number(c.valuesByScenario[s.id]) || 0), 0); });
   const scenarioPills = `<div class="pills">${scenarios.map((s) => `<button class="pill ${s.id === state.budgetScenario ? 'active' : ''}" data-action="switch-scenario" data-scenario="${s.id}">${escapeHtml(s.label)}</button>`).join('')}</div>`;
-  const rows = cats.map((c, i) => `
+  const rows = cats.map((c, i) => {
+    const budgeted = Number(c.valuesByScenario[state.budgetScenario]) || 0;
+    const spent = expenseTotalForCategory(trip, c.name);
+    const remaining = budgeted - spent;
+    return `
     <tr>
       <td><input data-arr="budget.categories" data-idx="${i}" data-field="name" value="${attr(c.name)}"></td>
       ${scenarios.map((s) => `<td><input type="number" data-arr="budget.categories" data-idx="${i}" data-field="valuesByScenario.${s.id}" value="${c.valuesByScenario[s.id] ?? ''}"></td>`).join('')}
+      <td>${formatEUR(spent)}</td>
+      <td class="${remaining < -0.01 ? 'balance-neg' : 'balance-pos'}">${formatEUR(remaining)}</td>
       <td><button class="icon-btn danger" data-action="remove-row" data-arr="budget.categories" data-idx="${i}">✕</button></td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
   const subtotal = totals[state.budgetScenario] || 0;
   const imprevistos = subtotal * (trip.budget.imprevistosPct || 0);
   const total = subtotal + imprevistos;
+  const totalSpentAll = (trip.expenses || []).reduce((s, e) => s + (Number(e.amount) || 0), 0);
   const nTravelers = (trip.travelerIds || []).length || 1;
   const familyRows = (trip.budget.familyTotals || []).map((f) => {
     const fg = (trip.familyGroups || []).find((g) => g.id === f.familyGroupId);
@@ -624,16 +693,17 @@ function renderPressupostTab(trip) {
     <div class="tab-toolbar">${scenarioPills}</div>
     <div class="card table-wrap">
       <table class="budget-table">
-        <thead><tr><th>Concepte</th>${scenarios.map((s) => `<th>${escapeHtml(s.label)}</th>`).join('')}<th></th></tr></thead>
+        <thead><tr><th>Concepte</th>${scenarios.map((s) => `<th>${escapeHtml(s.label)}</th>`).join('')}<th>Gastat</th><th>Restant</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
         <tfoot>
-          <tr><td><strong>Subtotal</strong></td><td colspan="${scenarios.length}"><strong>${formatEUR(subtotal)}</strong></td><td></td></tr>
-          <tr><td>Imprevistos (${Math.round((trip.budget.imprevistosPct || 0) * 100)}%)</td><td colspan="${scenarios.length}">${formatEUR(imprevistos)}</td><td></td></tr>
-          <tr><td><strong>TOTAL</strong></td><td colspan="${scenarios.length}"><strong>${formatEUR(total)}</strong></td><td></td></tr>
-          <tr><td>Cost per persona (${nTravelers})</td><td colspan="${scenarios.length}">${formatEUR(total / nTravelers)}</td><td></td></tr>
+          <tr><td><strong>Subtotal</strong></td><td colspan="${scenarios.length + 2}"><strong>${formatEUR(subtotal)}</strong></td><td></td></tr>
+          <tr><td>Imprevistos (${Math.round((trip.budget.imprevistosPct || 0) * 100)}%)</td><td colspan="${scenarios.length + 2}">${formatEUR(imprevistos)}</td><td></td></tr>
+          <tr><td><strong>TOTAL</strong></td><td colspan="${scenarios.length}"><strong>${formatEUR(total)}</strong></td><td><strong>${formatEUR(totalSpentAll)}</strong></td><td class="${(total - totalSpentAll) < -0.01 ? 'balance-neg' : 'balance-pos'}"><strong>${formatEUR(total - totalSpentAll)}</strong></td><td></td></tr>
+          <tr><td>Cost per persona (${nTravelers})</td><td colspan="${scenarios.length + 2}">${formatEUR(total / nTravelers)}</td><td></td></tr>
         </tfoot>
       </table>
       <button class="btn-secondary small" data-action="add-row" data-arr="budget.categories">+ Afegir categoria</button>
+      <p class="muted small-note" style="margin-top:8px;">"Gastat" es calcula sumant les despeses de la pestanya Despeses amb la mateixa categoria (comparació amb l'escenari seleccionat).</p>
     </div>
     ${familyRows ? `<div class="card"><h3>Desglossament per família</h3><div class="table-wrap"><table class="budget-table"><thead><tr><th>Família</th><th>Total</th><th>Per persona</th></tr></thead><tbody>${familyRows}</tbody></table></div></div>` : ''}
   `;
@@ -695,6 +765,14 @@ function renderDespesesTab(trip) {
         <label>Import (€)<input type="number" data-arr="expenses" data-idx="${i}" data-field="amount" value="${exp.amount ?? ''}"></label>
         <label>Data<input type="date" data-arr="expenses" data-idx="${i}" data-field="date" value="${attr(exp.date)}"></label>
       </div>
+      <div class="grid2">
+        <label>Import en moneda local<input type="number" step="0.01" data-arr="expenses" data-idx="${i}" data-field="foreignAmount" value="${exp.foreignAmount ?? ''}" placeholder="p.ex. 1500"></label>
+        <label>Moneda<input data-arr="expenses" data-idx="${i}" data-field="foreignCurrency" value="${attr(exp.foreignCurrency)}" placeholder="PHP"></label>
+      </div>
+      <div class="grid2">
+        <label>Canvi (1€ = X)<input type="number" step="0.0001" data-arr="expenses" data-idx="${i}" data-field="fxRate" value="${exp.fxRate ?? ''}" placeholder="p.ex. 60.5"></label>
+        <button type="button" class="btn-secondary small" data-action="fx-convert" data-idx="${i}" style="align-self:flex-end;margin-bottom:2px;">🔁 Calcula € = local ÷ canvi</button>
+      </div>
       <label>Pagat per
         <select data-arr="expenses" data-idx="${i}" data-field="paidBy">
           ${travelers.map((t) => `<option value="${t.id}" ${exp.paidBy === t.id ? 'selected' : ''}>${escapeHtml(t.firstName + ' ' + t.lastName)}</option>`).join('')}
@@ -739,11 +817,15 @@ function renderDespesesTab(trip) {
   const settlementRows = settlement.map((t) => `<div class="settle-row">💸 <strong>${escapeHtml(travelerName(t.from))}</strong> ha de pagar <strong>${formatEUR(t.amount)}</strong> a <strong>${escapeHtml(travelerName(t.to))}</strong></div>`).join('')
     || `<div class="muted">Tothom està en pau — cap transferència pendent.</div>`;
 
+  const budgetTotals = {};
+  (trip.budget.scenarios || []).forEach((s) => { budgetTotals[s.id] = (trip.budget.categories || []).reduce((sum, c) => sum + (Number(c.valuesByScenario[s.id]) || 0), 0); });
+  const budgetedForScenario = (trip.budget.scenarios || []).length ? (budgetTotals[state.budgetScenario] || 0) * (1 + (trip.budget.imprevistosPct || 0)) : null;
+  const vsBudget = budgetedForScenario !== null ? `<span class="muted">· Pressupostat (${escapeHtml((trip.budget.scenarios.find((s) => s.id === state.budgetScenario) || {}).label || '')}): <strong>${formatEUR(budgetedForScenario)}</strong> · Diferència: <strong class="${(budgetedForScenario - totalSpent) < -0.01 ? 'balance-neg' : 'balance-pos'}">${formatEUR(budgetedForScenario - totalSpent)}</strong></span>` : '';
   $('#content').innerHTML = `
     <datalist id="expenseCategories">
       <option value="Allotjament"></option><option value="Vols i transport"></option><option value="Menjar"></option><option value="Activitats"></option><option value="Altres"></option>
     </datalist>
-    <div class="tab-toolbar"><button class="btn" data-action="add-row" data-arr="expenses">+ Afegir despesa</button><span class="muted">Total gastat: <strong>${formatEUR(totalSpent)}</strong></span></div>
+    <div class="tab-toolbar"><button class="btn" data-action="add-row" data-arr="expenses">+ Afegir despesa</button><span class="muted">Total gastat: <strong>${formatEUR(totalSpent)}</strong></span>${vsBudget}</div>
     ${cards}
     <div class="card table-wrap">
       <h3>Balanç per persona</h3>
@@ -947,9 +1029,12 @@ function renderGastronomiaTab(trip) {
 // ════════════════════════════════════════════════════
 function renderViatgersTab(trip) {
   const memberIds = new Set(trip.travelerIds || []);
-  const rows = state.travelers.map((tr) => `
+  const rows = state.travelers.map((tr) => {
+    const warn = passportExpiryWarning(tr, trip);
+    return `
     <div class="card traveler-card">
       <label style="margin-top:0;"><input type="checkbox" data-action="toggle-trip-traveler" data-id="${tr.id}" ${memberIds.has(tr.id) ? 'checked' : ''} style="width:auto;display:inline-block;margin-right:6px;"> Participa en aquest viatge</label>
+      ${warn ? `<div class="passport-warning passport-warning-${warn.level}">${warn.text}</div>` : ''}
       <div class="grid2">
         <label>Nom<input data-entity="traveler" data-id="${tr.id}" data-field="firstName" value="${attr(tr.firstName)}"></label>
         <label>Cognoms<input data-entity="traveler" data-id="${tr.id}" data-field="lastName" value="${attr(tr.lastName)}"></label>
@@ -970,13 +1055,135 @@ function renderViatgersTab(trip) {
       <button class="btn-secondary small" data-action="scan-passport" data-traveler-id="${tr.id}" style="margin-top:8px;">📷 Escaneja el passaport (omple els camps)</button>
       <div id="passportScanStatus-${tr.id}" class="muted" style="margin-top:4px;"></div>
       <button class="btn-secondary small danger" data-action="delete-traveler" data-id="${tr.id}" style="margin-top:8px;">Elimina viatger</button>
-    </div>`).join('') || emptyState('Cap viatger encara.');
+    </div>`;
+  }).join('') || emptyState('Cap viatger encara.');
   $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-traveler">+ Nou viatger</button><button class="btn-secondary" data-action="import-passports-excel">📥 Importa des d'Excel</button></div><div id="passportExcelStatus" class="muted" style="margin:4px 0 8px;"></div>${rows}`;
 }
 
 // ════════════════════════════════════════════════════
 //  RENDER: DOCUMENTS
 // ════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+//  CÒPIA DE SEGURETAT (JSON) — exporta/importa tot: viatges, viatgers i adjunts.
+//  Tot es queda en un fitxer que tu guardes on vulguis; no es puja enlloc.
+// ════════════════════════════════════════════════════
+function bytesToB64(bytes) {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  return btoa(binary);
+}
+function b64ToBytes(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+async function exportBackup() {
+  const attachmentsRaw = await idbGetAll('attachments');
+  const attachments = [];
+  for (const a of attachmentsRaw) {
+    const buf = await a.blob.arrayBuffer();
+    attachments.push({ id: a.id, filename: a.filename, mimeType: a.mimeType, dataB64: bytesToB64(new Uint8Array(buf)) });
+  }
+  const payload = { format: 'viatges-app-backup', version: 1, exportedAt: new Date().toISOString(), travelers: state.travelers, trips: state.trips, attachments };
+  downloadFile(`viatges-copia-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(payload), 'application/json');
+}
+function remapAttachmentRefs(arr, idMap) {
+  (arr || []).forEach((item) => {
+    (item.attachments || []).forEach((att) => { if (att.blobId != null && idMap[att.blobId] != null) att.blobId = idMap[att.blobId]; });
+  });
+}
+async function importBackupFromFile(file) {
+  const text = await file.text();
+  let payload;
+  try { payload = JSON.parse(text); } catch (e) { throw new Error('El fitxer no és un JSON vàlid.'); }
+  if (payload.format !== 'viatges-app-backup') throw new Error('Aquest fitxer no sembla una còpia de seguretat d’aquesta app.');
+  if (!confirm(`Això reemplaçarà TOTES les dades actuals d’aquest dispositiu per les de la còpia (${payload.exportedAt ? formatDateHuman(payload.exportedAt.slice(0, 10)) : 'data desconeguda'}). Vols continuar?`)) return null;
+  await idbClearAll('trips'); await idbClearAll('travelers'); await idbClearAll('attachments');
+  const idMap = {};
+  for (const a of (payload.attachments || [])) {
+    const bytes = b64ToBytes(a.dataB64);
+    const blob = new Blob([bytes], { type: a.mimeType || 'application/octet-stream' });
+    const newId = await idbAdd('attachments', { filename: a.filename, mimeType: blob.type, blob });
+    idMap[a.id] = newId;
+  }
+  for (const tr of (payload.travelers || [])) { remapAttachmentRefs([tr], idMap); await idbPut('travelers', tr); }
+  for (const trip of (payload.trips || [])) { remapAttachmentRefs(trip.transportLegs, idMap); remapAttachmentRefs(trip.lodging, idMap); await idbPut('trips', trip); }
+  state.travelers = await idbGetAll('travelers');
+  state.trips = await idbGetAll('trips');
+  const defaultTrip = state.trips.find((t) => t.isDefault) || state.trips[0];
+  state.currentTripId = defaultTrip ? defaultTrip.id : null;
+  state.currentVariantId = defaultTrip ? defaultVariantFor(defaultTrip) : null;
+  return payload;
+}
+let backupImportInputEl;
+function ensureBackupImportInput() {
+  if (backupImportInputEl) return backupImportInputEl;
+  backupImportInputEl = document.createElement('input');
+  backupImportInputEl.type = 'file';
+  backupImportInputEl.accept = 'application/json,.json';
+  backupImportInputEl.style.display = 'none';
+  document.body.appendChild(backupImportInputEl);
+  backupImportInputEl.addEventListener('change', async () => {
+    const file = backupImportInputEl.files[0];
+    backupImportInputEl.value = '';
+    if (!file) return;
+    const statusEl = document.getElementById('backupStatus');
+    try {
+      const payload = await importBackupFromFile(file);
+      if (payload) { if (statusEl) statusEl.textContent = ''; renderAll(); alert('Còpia de seguretat importada correctament.'); }
+    } catch (e) {
+      alert('No s’ha pogut importar la còpia: ' + e.message);
+    }
+  });
+  return backupImportInputEl;
+}
+
+// ════════════════════════════════════════════════════
+//  RESUM IMPRIMIBLE / PDF — per compartir amb qui no té l'app instal·lada.
+// ════════════════════════════════════════════════════
+function buildPrintableSummaryHTML(trip) {
+  const esc = escapeHtml;
+  const days = (trip.itinerary || []).filter((d) => !d.variantId || d.variantId === state.currentVariantId).slice().sort((a, b) => (a.day || 0) - (b.day || 0));
+  const legs = (trip.transportLegs || []).filter((l) => !l.variantId || l.variantId === state.currentVariantId);
+  const lodging = (trip.lodging || []).filter((l) => !l.variantId || l.variantId === state.currentVariantId);
+  return `<!DOCTYPE html><html lang="ca"><head><meta charset="UTF-8"><title>${esc(trip.name)} — Resum</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1c2b2e;max-width:800px;margin:20px auto;padding:0 16px;}
+  h1{color:#0f6674;margin-bottom:0;} .sub{color:#6b7a7d;margin-top:4px;}
+  h2{color:#0f6674;border-bottom:2px solid #e6e0d4;padding-bottom:4px;margin-top:28px;}
+  table{width:100%;border-collapse:collapse;margin-top:8px;} td,th{border:1px solid #e6e0d4;padding:6px 8px;text-align:left;font-size:13px;}
+  .day{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #eee;}
+  .day strong{color:#ff7a54;}
+  .print-btn{float:right;padding:8px 14px;background:#0f6674;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;}
+  @media print{ .no-print{display:none;} }
+</style></head><body>
+  <button class="no-print print-btn" onclick="window.print()">🖨️ Imprimeix / Desa com a PDF</button>
+  <h1>${esc(trip.name)}</h1>
+  <div class="sub">${esc(trip.destination || '')} · ${formatDateHuman(trip.dateStart)} — ${formatDateHuman(trip.dateEnd)}</div>
+  <h2>Itinerari</h2>
+  ${days.map((d) => `<div class="day"><strong>Dia ${esc(d.day)} — ${formatDateHuman(d.date)}</strong><br>
+    ${d.location ? `📍 ${esc(d.location)}<br>` : ''}${d.transit ? `🚐 ${esc(d.transit)}<br>` : ''}${d.activity ? `${esc(d.activity)}<br>` : ''}${d.lodging ? `🛏 ${esc(d.lodging)}<br>` : ''}${d.whereToEat ? `🍽 ${esc(d.whereToEat)}` : ''}
+  </div>`).join('') || '<p>Sense dies planificats.</p>'}
+  <h2>Reserves de transport</h2>
+  <table><thead><tr><th>Tipus</th><th>Ruta</th><th>Sortida</th><th>Arribada</th><th>Proveïdor</th><th>Estat</th></tr></thead><tbody>
+  ${legs.map((l) => `<tr><td>${esc(legTypeLabel(l.type))}</td><td>${esc(l.route)}</td><td>${esc(l.dateDep)} ${esc(l.timeDep)}</td><td>${esc(l.dateArr)} ${esc(l.timeArr)}</td><td>${esc(l.provider)}</td><td>${l.status === 'reservat' ? 'Reservat' : 'Opció'}</td></tr>`).join('') || '<tr><td colspan="6">Cap tram encara.</td></tr>'}
+  </tbody></table>
+  <h2>Allotjament</h2>
+  <table><thead><tr><th>Destinació</th><th>Hotel</th><th>Check-in</th><th>Check-out</th><th>Estat</th></tr></thead><tbody>
+  ${lodging.map((l) => `<tr><td>${esc(l.destination)}</td><td>${esc(l.name)}</td><td>${esc(l.checkIn)}</td><td>${esc(l.checkOut)}</td><td>${esc(lodgingStatusLabel(l.status))}</td></tr>`).join('') || '<tr><td colspan="5">Cap allotjament encara.</td></tr>'}
+  </tbody></table>
+</body></html>`;
+}
+function openPrintableSummary(trip) {
+  const newTab = window.open('', '_blank');
+  if (!newTab) { alert('El navegador ha bloquejat la finestra emergent. Permet finestres emergents per aquesta pàgina i torna-ho a provar.'); return; }
+  newTab.document.open();
+  newTab.document.write(buildPrintableSummaryHTML(trip));
+  newTab.document.close();
+}
+
 function renderDocumentsTab(trip) {
   const items = [];
   (trip.transportLegs || []).forEach((l, i) => (l.attachments || []).forEach((a, ai) => items.push({ source: `Transport: ${l.route || l.code || ''}`, arr: 'transportLegs', idx: i, ai, a })));
@@ -996,7 +1203,17 @@ function renderDocumentsTab(trip) {
         <button class="icon-btn danger" data-action="delete-attachment" data-arr="${it.arr}" data-idx="${it.idx}" data-ai="${it.ai}">✕</button>
       </div>
     </div>`).join('') || emptyState('Encara no hi ha documents adjunts. Afegeix-ne des de Vols o Allotjament.');
-  $('#content').innerHTML = rows;
+  const backupCard = `<div class="card">
+    <h3>Còpia de seguretat i exportació</h3>
+    <button class="btn-secondary small" data-action="export-backup">⬇ Exporta còpia de seguretat (JSON)</button>
+    <button class="btn-secondary small" data-action="import-backup">⬆ Importa còpia de seguretat</button>
+    <div id="backupStatus" class="muted" style="margin-top:6px;"></div>
+    <p class="muted small-note" style="margin-top:6px;">Guarda el fitxer exportat on vulguis (OneDrive, correu...) per si canvies de mòbil o esborres el navegador.</p>
+    <hr class="sep">
+    <button class="btn-secondary small" data-action="print-summary">🖨️ Genera resum imprimible (PDF)</button>
+    <p class="muted small-note" style="margin-top:6px;">Útil per compartir l'itinerari amb qui no té l'app instal·lada.</p>
+  </div>`;
+  $('#content').innerHTML = backupCard + rows;
 }
 
 // ════════════════════════════════════════════════════
@@ -1490,12 +1707,32 @@ document.addEventListener('click', async (e) => {
     case 'export-mymaps-csv':
       exportMyMapsCSV(trip);
       break;
+    case 'export-backup':
+      await exportBackup();
+      break;
+    case 'import-backup':
+      ensureBackupImportInput().click();
+      break;
+    case 'print-summary':
+      openPrintableSummary(trip);
+      break;
     case 'export-ics':
       exportICS(trip);
       break;
     case 'expense-split-all': {
       const idx = +btn.dataset.idx;
       trip.expenses[idx].splitAmong = [...(trip.travelerIds || [])];
+      await saveTrip(trip);
+      renderAll();
+      break;
+    }
+    case 'fx-convert': {
+      const idx = +btn.dataset.idx;
+      const exp = trip.expenses[idx];
+      const foreignAmount = Number(exp.foreignAmount);
+      const fxRate = Number(exp.fxRate);
+      if (!foreignAmount || !fxRate) { alert('Omple primer l’import en moneda local i el canvi (1€ = X).'); break; }
+      exp.amount = round2(foreignAmount / fxRate);
       await saveTrip(trip);
       renderAll();
       break;
@@ -1572,6 +1809,10 @@ boot().catch((err) => {
   console.error(err);
   document.getElementById('content').innerHTML = `<div class="empty-state">Error carregant l'app: ${escapeHtml(err.message || err)}</div>`;
 });
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
 </script>
 </body>
 </html>
