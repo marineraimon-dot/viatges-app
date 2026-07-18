@@ -999,12 +999,22 @@ function ensureFileInput() {
     const { arr, idx } = state.pendingAttach;
     const trip = getCurrentTrip();
     const item = getNestedArray(trip, arr)[idx];
-    // Adjunt local: es guarda només en aquest dispositiu (IndexedDB), no es puja
-    // ni es comparteix enlloc. No cal token ni contrasenya de xifrat per això.
-    const blobId = await idbAdd('attachments', { filename: file.name, mimeType: file.type, blob: file });
-    item.attachments = item.attachments || [];
-    item.attachments.push({ filename: file.name, blobId });
-    await saveTrip(trip);
+    try {
+      // Llegeix tot el contingut ara mateix (força que fitxers de núvol com
+      // OneDrive/Drive es baixin del tot abans de desar-los, en comptes de
+      // guardar una referència que podria quedar buida més endavant).
+      const buf = await file.arrayBuffer();
+      if (!buf || buf.byteLength === 0) throw new Error('El fitxer sembla buit. Si ve d’OneDrive/Drive, prova de desar-lo primer a "Fitxers" del mòbil i adjunta’l des d’allà.');
+      const blob = new Blob([buf], { type: file.type || 'application/pdf' });
+      // Adjunt local: es guarda només en aquest dispositiu (IndexedDB), no es puja
+      // ni es comparteix enlloc. No cal token ni contrasenya de xifrat per això.
+      const blobId = await idbAdd('attachments', { filename: file.name, mimeType: blob.type, blob });
+      item.attachments = item.attachments || [];
+      item.attachments.push({ filename: file.name, blobId });
+      await saveTrip(trip);
+    } catch (e) {
+      alert('No s’ha pogut adjuntar el fitxer: ' + e.message);
+    }
     fileInputEl.value = '';
     state.pendingAttach = null;
     renderAll();
@@ -1017,9 +1027,19 @@ async function openAttachmentByRef(arrName, idx, ai) {
   const a = item.attachments[ai];
   if (a.path) { window.open(a.path, '_blank'); return; }
   if (a.blobId != null) {
+    // Obre la pestanya ABANS de l'await: alguns navegadors mòbils (Safari
+    // sobretot) bloquegen window.open() si passa massa temps després del
+    // clic de l'usuari (per això es quedava "només com a opció").
+    const newTab = window.open('', '_blank');
     const rec = await idbGet('attachments', a.blobId);
-    if (!rec) { alert('Aquest adjunt no és en aquest dispositiu. Torna\'l a pujar amb "+ Adjuntar PDF".'); return; }
-    window.open(URL.createObjectURL(rec.blob), '_blank');
+    if (!rec || !rec.blob || rec.blob.size === 0) {
+      if (newTab) newTab.close();
+      alert('Aquest adjunt no s’ha pogut carregar. Torna\'l a adjuntar amb "+ Adjuntar PDF".');
+      return;
+    }
+    const url = URL.createObjectURL(rec.blob);
+    if (newTab) newTab.location.href = url;
+    else window.open(url, '_blank');
   }
 }
 async function deleteAttachmentByRef(arrName, idx, ai) {
