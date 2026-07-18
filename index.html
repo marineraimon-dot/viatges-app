@@ -21,11 +21,6 @@
   .trip-name-input{width:100%;background:transparent;border:none;color:#fff;font-size:20px;font-weight:700;padding:2px 0;margin-bottom:6px;}
   .trip-name-input:focus{outline:1px solid rgba(255,255,255,.5);border-radius:4px;}
   .trip-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,.9);margin-bottom:6px;}
-  .sync-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
-  .sync-badge{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;}
-  .sync-badge.sync-error{background:var(--coral);}
-  #app.read-only-mode #topbar{background:linear-gradient(var(--teal),var(--teal) 100%);}
-  #app.read-only-mode input:disabled, #app.read-only-mode select:disabled, #app.read-only-mode textarea:disabled{opacity:.75;cursor:default;background:transparent;}
   .trip-meta-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
   .trip-meta-fields input, .trip-meta-fields select{width:100%;padding:6px 8px;border-radius:6px;border:none;font-size:12.5px;background:rgba(255,255,255,.15);color:#fff;}
   .trip-meta-fields input::placeholder{color:rgba(255,255,255,.7);}
@@ -104,14 +99,6 @@
   .balance-neg{color:var(--red);font-weight:700;}
   .settle-row{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
   .settle-row:last-child{border-bottom:none;}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
-  @media (min-width:520px){ .modal-overlay{align-items:center;} }
-  .modal-card{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:480px;box-shadow:0 -4px 24px rgba(0,0,0,.2);}
-  @media (min-width:520px){ .modal-card{border-radius:16px;} }
-  .modal-card h3{margin:0 0 6px;color:var(--teal-dark);}
-  .modal-card p{font-size:12.5px;color:var(--muted);margin:0 0 12px;}
-  .modal-card input{margin-bottom:10px;}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -124,7 +111,6 @@
     <div class="tabbar-fade tabbar-fade-right" id="tabbarFadeRight" style="display:none;"></div>
   </div>
 </div>
-<div id="modalRoot"></div>
 
 <script src="data-seed.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -136,15 +122,9 @@ const DB_NAME = 'viatges_app_v1';
 const DB_VERSION = 1;
 let db;
 
-// GitHub com a "base de dades" compartida: tothom pot llegir data/trips.json
-// (repositori públic); només qui tingui un token pot escriure-hi (sincronitza
-// entre els teus dispositius). Sense token, l'app queda en mode només lectura.
-const GITHUB_OWNER = 'marineraimon-dot';
-const GITHUB_REPO = 'viatges-app';
-const GITHUB_BRANCH = 'main';
-const GITHUB_DATA_PATH = 'data/trips.json';
-const GITHUB_TOKEN_KEY = 'viatges_gh_token';
-
+// Tot es guarda només en aquest dispositiu (IndexedDB del navegador).
+// Res es puja ni es comparteix enlloc — funciona com una agenda/guia
+// de viatge purament local.
 const state = {
   trips: [],
   travelers: [],
@@ -154,10 +134,6 @@ const state = {
   budgetScenario: 'confort',
   leafletMap: null,
   pendingAttach: null,
-  canEdit: false,
-  remoteSha: null,
-  syncStatus: 'idle', // idle | syncing | synced | error | conflict | offline
-  syncTimer: null,
 };
 
 const TABS = [
@@ -229,301 +205,17 @@ async function saveTrip(trip) {
   await idbPut('trips', trip);
   const idx = state.trips.findIndex((t) => t.id === trip.id);
   if (idx >= 0) state.trips[idx] = trip; else state.trips.push(trip);
-  scheduleSync();
 }
 
 // ════════════════════════════════════════════════════
-//  SYNC AMB GITHUB (lectura pública / escriptura amb token)
-// ════════════════════════════════════════════════════
-function getToken() { return localStorage.getItem(GITHUB_TOKEN_KEY) || ''; }
-function setToken(t) {
-  if (t) localStorage.setItem(GITHUB_TOKEN_KEY, t);
-  else localStorage.removeItem(GITHUB_TOKEN_KEY);
-  state.canEdit = !!getToken();
-}
-function b64EncodeUnicode(str) { return btoa(unescape(encodeURIComponent(str))); }
-function b64DecodeUnicode(str) { return decodeURIComponent(escape(atob(str.replace(/\n/g, '')))); }
-
-async function fetchRemoteFile(token) {
-  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}?ref=${GITHUB_BRANCH}`;
-  const headers = { Accept: 'application/vnd.github+json' };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  const resp = await fetch(url, { headers });
-  if (resp.status === 404) return { data: null, sha: null };
-  if (!resp.ok) throw new Error('Error de lectura a GitHub (' + resp.status + ')');
-  const json = await resp.json();
-  const data = JSON.parse(b64DecodeUnicode(json.content));
-  return { data, sha: json.sha };
-}
-async function pushRemoteFile(token, dataObj, sha) {
-  const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`;
-  const body = {
-    message: 'Actualitza dades de viatges (' + new Date().toISOString() + ')',
-    content: b64EncodeUnicode(JSON.stringify(dataObj, null, 2)),
-    branch: GITHUB_BRANCH,
-  };
-  if (sha) body.sha = sha;
-  const resp = await fetch(url, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (resp.status === 409 || resp.status === 422) { const e = new Error('conflicte'); e.conflict = true; throw e; }
-  if (!resp.ok) { const t = await resp.text().catch(() => ''); throw new Error('Error d’escriptura a GitHub (' + resp.status + '): ' + t); }
-  const json = await resp.json();
-  return json.content.sha;
-}
-
-function scheduleSync() {
-  if (!state.canEdit) return;
-  clearTimeout(state.syncTimer);
-  state.syncTimer = setTimeout(doSync, 2500);
-}
-async function doSync() {
-  const token = getToken();
-  if (!token) return;
-  state.syncStatus = 'syncing';
-  renderSyncBadge();
-  try {
-    const passphrase = getPassphrase();
-    if (passphrase && !state.encryptionSalt) state.encryptionSalt = randomSaltB64();
-    const travelersForSync = await prepareTravelersForSync(state.travelers, passphrase, state.encryptionSalt);
-    const tripsForSync = [];
-    for (const t of state.trips) tripsForSync.push(await prepareTripForSync(t, passphrase, state.encryptionSalt));
-    const payload = { encryptionSalt: state.encryptionSalt || null, travelers: travelersForSync, trips: tripsForSync };
-    const newSha = await pushRemoteFile(token, payload, state.remoteSha);
-    state.remoteSha = newSha;
-    state.syncStatus = 'synced';
-  } catch (e) {
-    if (e.conflict) {
-      state.syncStatus = 'conflict';
-    } else {
-      state.syncStatus = 'error';
-      console.error(e);
-    }
-  }
-  renderSyncBadge();
-}
-function renderSyncBadge() {
-  const el = document.getElementById('syncBadge');
-  if (el) el.outerHTML = syncBadgeHtml();
-}
-function passphraseBadgeHtml() {
-  const has = !!getPassphrase();
-  return `<span id="passBadge" class="sync-badge" data-action="set-passphrase" title="Contrasenya de xifrat per a passaports i dates de naixement (nomes en aquest dispositiu)">${has ? '🔐 Xifrat configurat' : '🔓 Passaports sense contrasenya'}</span>`;
-}
-function renderPassBadge() {
-  const el = document.getElementById('passBadge');
-  if (el) el.outerHTML = passphraseBadgeHtml();
-}
-function syncBadgeHtml() {
-  if (!state.canEdit) return `<span id="syncBadge" class="sync-badge" data-action="set-token" title="Nomes lectura — clica per introduir el token d'edicio">👁 Lectura</span>`;
-  const map = {
-    idle: { text: '✏️ Edició', cls: '' },
-    syncing: { text: '⏳ Sincronitzant…', cls: '' },
-    synced: { text: '✅ Sincronitzat', cls: '' },
-    error: { text: '⚠️ Error de sincronització (clica)', cls: 'sync-error' },
-    conflict: { text: '⚠️ Canvis remots nous (clica per recarregar)', cls: 'sync-error' },
-  };
-  const s = map[state.syncStatus] || map.idle;
-  const action = state.syncStatus === 'conflict' ? 'reload-remote' : (state.syncStatus === 'error' ? 'retry-sync' : 'set-token');
-  return `<span id="syncBadge" class="sync-badge ${s.cls}" data-action="${action}" title="Clica per canviar el token o reintentar">${s.text}</span>`;
-}
-// ════════════════════════════════════════════════════
-//  MODAL (token / contrasenya) — formulari propi en lloc de prompt(),
-//  que no funciona bé en molts navegadors mòbils (sobretot apps afegides
-//  a la pantalla d'inici en mode standalone).
-// ════════════════════════════════════════════════════
-function closeModal() { $('#modalRoot').innerHTML = ''; }
-function openSecretModal(kind) {
-  const isToken = kind === 'token';
-  const currentVal = isToken ? getToken() : getPassphrase();
-  $('#modalRoot').innerHTML = `
-    <div class="modal-overlay">
-      <div class="modal-card">
-        <h3>${isToken ? 'Token de GitHub' : 'Contrasenya de xifrat'}</h3>
-        <p>${isToken
-          ? 'Enganxa aquí el teu token d’accés personal de GitHub. Només es desa en aquest dispositiu (localStorage), mai s’envia enlloc més que a GitHub.'
-          : 'Contrasenya per xifrar passaports, dates de naixement, codis de reserva i PDFs adjunts. Ha de ser la mateixa a tots els teus dispositius. Només es desa en aquest dispositiu.'}</p>
-        <input id="secretModalInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="${attr(currentVal)}" placeholder="${isToken ? 'ghp_... o github_pat_...' : 'la teva contrasenya'}">
-        <div class="modal-actions">
-          ${currentVal ? `<button class="btn-secondary danger" data-action="clear-secret" data-kind="${kind}">Esborra</button>` : ''}
-          <button class="btn-secondary" data-action="close-modal">Cancel·la</button>
-          <button class="btn" data-action="save-secret" data-kind="${kind}">Desa</button>
-        </div>
-      </div>
-    </div>`;
-  const input = document.getElementById('secretModalInput');
-  input.focus();
-  input.select();
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveSecretFromModal(kind); });
-}
-async function saveSecretFromModal(kind) {
-  const val = document.getElementById('secretModalInput').value.trim();
-  if (kind === 'token') {
-    setToken(val);
-    if (state.canEdit) {
-      try {
-        const remote = await fetchRemoteFile(getToken());
-        if (remote.data) { state.remoteSha = remote.sha; state.encryptionSalt = remote.data.encryptionSalt || state.encryptionSalt; }
-      } catch (e) { console.warn(e); }
-    }
-  } else {
-    setPassphrase(val);
-    await decryptTravelersInPlace(state.travelers, getPassphrase(), state.encryptionSalt);
-    for (const tp of state.trips) await decryptTripInPlace(tp, getPassphrase(), state.encryptionSalt);
-    for (const t of state.travelers) await idbPut('travelers', t);
-    for (const tp of state.trips) await idbPut('trips', tp);
-  }
-  closeModal();
-  renderAll();
-}
-function applyReadOnlyMode() {
-  const app = document.getElementById('app');
-  app.classList.toggle('read-only-mode', !state.canEdit);
-  if (state.canEdit) return;
-  document.querySelectorAll('#content input, #content select, #content textarea, #topbar input, #topbar select').forEach((el) => { el.disabled = true; });
-  const mutatingActions = new Set(['add-row', 'remove-row', 'create-trip', 'delete-trip', 'add-traveler', 'delete-traveler', 'attach-file', 'delete-attachment', 'mark-recommended', 'toggle-trip-traveler', 'toggle-expense-split', 'expense-split-family', 'expense-split-all']);
-  document.querySelectorAll('[data-action]').forEach((elm) => {
-    if (mutatingActions.has(elm.dataset.action)) elm.style.display = 'none';
-  });
-}
-
-// ════════════════════════════════════════════════════
-//  XIFRAT DE DADES SENSIBLES (passaport / naixement)
-//  Web Crypto (AES-GCM + PBKDF2), 100% al navegador, sense llibreries.
-//  Sense la contrasenya de xifrat, aquests camps viatgen il·legibles
-//  dins el JSON públic de GitHub.
-// ════════════════════════════════════════════════════
-const ENC_PASSPHRASE_KEY = 'viatges_enc_passphrase';
-const SENSITIVE_TRAVELER_FIELDS = ['birthDate', 'placeOfBirth', 'passportNumber', 'passportIssueDate', 'passportExpiryDate'];
-
-function getPassphrase() { return localStorage.getItem(ENC_PASSPHRASE_KEY) || ''; }
-function setPassphrase(p) { if (p) localStorage.setItem(ENC_PASSPHRASE_KEY, p); else localStorage.removeItem(ENC_PASSPHRASE_KEY); }
-
-function b64FromBytes(buf) {
-  // Chunked perquè String.fromCharCode(...bytes) peta amb fitxers grans (límit d'arguments del motor JS).
-  const bytes = new Uint8Array(buf);
-  let binary = '';
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-  return btoa(binary);
-}
-function bytesFromB64(b64) { return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); }
-function randomSaltB64() { return b64FromBytes(crypto.getRandomValues(new Uint8Array(16)).buffer); }
-
-async function deriveKey(passphrase, saltBytes) {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: saltBytes, iterations: 150000, hash: 'SHA-256' },
-    keyMaterial, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
-  );
-}
-async function encryptPII(obj, passphrase, saltB64) {
-  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(obj)));
-  const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-  combined.set(iv, 0);
-  combined.set(new Uint8Array(ciphertext), iv.length);
-  return b64FromBytes(combined.buffer);
-}
-async function decryptPII(blobB64, passphrase, saltB64) {
-  const key = await deriveKey(passphrase, bytesFromB64(saltB64));
-  const combined = bytesFromB64(blobB64);
-  const iv = combined.slice(0, 12);
-  const ciphertext = combined.slice(12);
-  const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
-  return JSON.parse(new TextDecoder().decode(plain));
-}
-async function prepareTravelersForSync(travelers, passphrase, saltB64) {
-  const out = [];
-  for (const t of travelers) {
-    const clean = { ...t };
-    if (passphrase && saltB64) {
-      const sensitive = {};
-      SENSITIVE_TRAVELER_FIELDS.forEach((f) => { sensitive[f] = clean[f] ?? null; });
-      clean.encryptedPII = await encryptPII(sensitive, passphrase, saltB64);
-    } else {
-      clean.encryptedPII = t.encryptedPII || null;
-    }
-    SENSITIVE_TRAVELER_FIELDS.forEach((f) => { clean[f] = null; });
-    out.push(clean);
-  }
-  return out;
-}
-async function decryptTravelersInPlace(travelers, passphrase, saltB64) {
-  if (!passphrase || !saltB64) return;
-  for (const t of travelers) {
-    if (t.encryptedPII) {
-      try {
-        const sensitive = await decryptPII(t.encryptedPII, passphrase, saltB64);
-        Object.assign(t, sensitive);
-      } catch (e) { /* contrasenya incorrecta o dades corruptes: es deixen en blanc */ }
-    }
-  }
-}
-// Referències de reserva (PNR) dels trams de transport: mateix tractament que el
-// passaport — amb nom + localitzador es podria consultar/modificar la reserva real.
-async function prepareTripForSync(trip, passphrase, saltB64) {
-  const clean = { ...trip, transportLegs: (trip.transportLegs || []).map((l) => ({ ...l })) };
-  for (const leg of clean.transportLegs) {
-    if (passphrase && saltB64 && leg.bookingRef) {
-      leg.encryptedBookingRef = await encryptPII({ bookingRef: leg.bookingRef }, passphrase, saltB64);
-    } else if (!(passphrase && saltB64)) {
-      leg.encryptedBookingRef = leg.encryptedBookingRef || null;
-    }
-    leg.bookingRef = '';
-  }
-  return clean;
-}
-async function decryptTripInPlace(trip, passphrase, saltB64) {
-  if (!passphrase || !saltB64) return;
-  for (const leg of (trip.transportLegs || [])) {
-    if (leg.encryptedBookingRef) {
-      try {
-        const { bookingRef } = await decryptPII(leg.encryptedBookingRef, passphrase, saltB64);
-        leg.bookingRef = bookingRef;
-      } catch (e) { /* contrasenya incorrecta o dades corruptes: es deixen en blanc */ }
-    }
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  BOOT
+//  BOOT — tot ve i es guarda només a IndexedDB d'aquest dispositiu.
 // ════════════════════════════════════════════════════
 async function boot() {
   db = await openDB();
-  state.canEdit = !!getToken();
+  let trips = await idbGetAll('trips');
+  let travelers = await idbGetAll('travelers');
 
-  let trips = null;
-  let travelers = null;
-
-  // 1) Intenta llegir les dades compartides de GitHub (funciona sense token, és públic)
-  try {
-    const remote = await fetchRemoteFile(getToken());
-    if (remote.data && remote.data.trips) {
-      trips = remote.data.trips;
-      travelers = remote.data.travelers || [];
-      state.remoteSha = remote.sha;
-      state.encryptionSalt = remote.data.encryptionSalt || null;
-      await decryptTravelersInPlace(travelers, getPassphrase(), state.encryptionSalt);
-      for (const trip of trips) await decryptTripInPlace(trip, getPassphrase(), state.encryptionSalt);
-      for (const t of travelers) await idbPut('travelers', t);
-      for (const trip of trips) await idbPut('trips', trip);
-    }
-  } catch (e) {
-    console.warn('No s’ha pogut llegir de GitHub, es fa servir la còpia local.', e);
-  }
-
-  // 2) Si no hi ha connexió (o el fitxer remot encara no existeix), fes servir la còpia local
-  if (!trips) {
-    trips = await idbGetAll('trips');
-    travelers = await idbGetAll('travelers');
-  }
-
-  // 3) Si tampoc hi ha res local (primer cop absolut), sembra amb les dades de fàbrica
+  // Primer cop absolut en aquest dispositiu: sembra amb les dades de fàbrica.
   if (trips.length === 0) {
     for (const t of (window.SEED_TRAVELERS || [])) await idbPut('travelers', t);
     for (const trip of (window.SEED_TRIPS || [])) await idbPut('trips', trip);
@@ -538,7 +230,6 @@ async function boot() {
     state.currentTripId = defaultTrip.id;
     state.currentVariantId = defaultVariantFor(defaultTrip);
   }
-  window.addEventListener('online', () => { if (state.canEdit) scheduleSync(); });
   renderAll();
 }
 
@@ -579,7 +270,7 @@ function formatDateHuman(iso) {
 function statusLabel(s) { return { confirmat: 'Confirmat', planificacio: 'Planificació', passat: 'Passat' }[s] || s; }
 function lodgingStatusLabel(s) { return { reservat: 'Reservat', opcio: 'Opció', 'cancel·lat': 'Cancel·lat' }[s] || s; }
 function legTypeLabel(t) {
-  return { flight_intl: '✈ Vol internacional', flight_domestic: '✈ Vol intern', ferry: '⛴ Ferri', van: '🚐 Trasllat', car_rental: '🚗 Cotxe de lloguer', other: 'Transport' }[t] || 'Transport';
+  return { flight_intl: '✈ Vol internacional', flight_domestic: '✈ Vol intern', ferry: '⛴ Ferri', van: '🚐 Trasllat', car_rental: '🚗 Cotxe de lloguer', parking: '🅿️ Pàrquing', other: 'Transport' }[t] || 'Transport';
 }
 function gmapsLink(query, lat, lng) {
   if (lat !== null && lat !== undefined && lat !== '' && lng !== null && lng !== undefined && lng !== '') {
@@ -664,7 +355,7 @@ function renderAll() {
   renderTopbar();
   renderTabbar();
   const trip = getCurrentTrip();
-  if (!trip) { $('#content').innerHTML = emptyState('Cap viatge. Crea’n un de nou amb el botó de dalt.'); applyReadOnlyMode(); return; }
+  if (!trip) { $('#content').innerHTML = emptyState('Cap viatge. Crea’n un de nou amb el botó de dalt.'); return; }
   switch (state.tab) {
     case 'itinerari': renderItinerariTab(trip); break;
     case 'transport': renderTransportTab(trip); break;
@@ -677,19 +368,16 @@ function renderAll() {
     case 'viatgers': renderViatgersTab(trip); break;
     case 'documents': renderDocumentsTab(trip); break;
   }
-  applyReadOnlyMode();
 }
 
 function renderTopbar() {
   const trip = getCurrentTrip();
   if (!trip) {
     $('#topbar').innerHTML = `<div class="topbar-row"><strong>Viatges Mariné Sánchez</strong>
-      <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button></div>
-      <div class="sync-row">${syncBadgeHtml()}${passphraseBadgeHtml()}</div>`;
+      <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button></div>`;
     return;
   }
   $('#topbar').innerHTML = `
-    <div class="sync-row">${syncBadgeHtml()}${passphraseBadgeHtml()}</div>
     <div class="topbar-row">
       <select id="tripSelect">${state.trips.map((t) => `<option value="${t.id}" ${t.id === trip.id ? 'selected' : ''}>${escapeHtml(t.name)}</option>`).join('')}</select>
       <button class="btn-secondary small" data-action="create-trip">+ Nou viatge</button>
@@ -808,8 +496,8 @@ function renderAttachments(arrName, idx, attachments) {
 
 function renderTransportTab(trip) {
   const legs = trip.transportLegs.map((l, i) => ({ ...l, _idx: i })).filter((l) => !l.variantId || l.variantId === state.currentVariantId);
-  const typeOptions = ['flight_intl', 'flight_domestic', 'ferry', 'van', 'car_rental', 'other'];
-  const typeLabels = { flight_intl: 'Vol internacional', flight_domestic: 'Vol intern', ferry: 'Ferri', van: 'Furgoneta / trasllat', car_rental: 'Cotxe de lloguer', other: 'Altre' };
+  const typeOptions = ['flight_intl', 'flight_domestic', 'ferry', 'van', 'car_rental', 'parking', 'other'];
+  const typeLabels = { flight_intl: 'Vol internacional', flight_domestic: 'Vol intern', ferry: 'Ferri', van: 'Furgoneta / trasllat', car_rental: 'Cotxe de lloguer', parking: 'Pàrquing', other: 'Altre' };
   const cards = legs.map((l) => `
     <div class="card">
       <div class="row-head">
@@ -836,7 +524,7 @@ function renderTransportTab(trip) {
           <option value="reservat" ${l.status === 'reservat' ? 'selected' : ''}>Reservat</option>
         </select>
       </label>
-      <label>Referència de reserva (PNR)<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingRef" value="${attr(l.bookingRef)}" ${getPassphrase() ? '' : 'disabled placeholder="🔒 introdueix la contrasenya de xifrat"'}></label>
+      <label>Referència de reserva (PNR)<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingRef" value="${attr(l.bookingRef)}"></label>
       <label>Enllaç de reserva<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingLink" value="${attr(l.bookingLink)}" placeholder="https://..."></label>
       ${l.bookingLink ? `<a class="btn-link" href="${attr(l.bookingLink)}" target="_blank" rel="noopener">Obrir enllaç de reserva ↗</a>` : ''}
       <label>Notes<textarea data-arr="transportLegs" data-idx="${l._idx}" data-field="notes">${escapeHtml(l.notes || '')}</textarea></label>
@@ -1253,21 +941,17 @@ function renderGastronomiaTab(trip) {
 // ════════════════════════════════════════════════════
 function renderViatgersTab(trip) {
   const memberIds = new Set(trip.travelerIds || []);
-  const hasPass = !!getPassphrase();
-  const lockAttr = hasPass ? '' : 'disabled';
-  const lockNote = hasPass ? '' : `<div class="muted" style="margin-top:2px;">🔒 Introdueix la contrasenya de xifrat (a dalt) per veure o editar aquest camp.</div>`;
   const rows = state.travelers.map((tr) => `
     <div class="card traveler-card">
       <label style="margin-top:0;"><input type="checkbox" data-action="toggle-trip-traveler" data-id="${tr.id}" ${memberIds.has(tr.id) ? 'checked' : ''} style="width:auto;display:inline-block;margin-right:6px;"> Participa en aquest viatge</label>
       <div class="grid2">
         <label>Nom<input data-entity="traveler" data-id="${tr.id}" data-field="firstName" value="${attr(tr.firstName)}"></label>
         <label>Cognoms<input data-entity="traveler" data-id="${tr.id}" data-field="lastName" value="${attr(tr.lastName)}"></label>
-        <label>Data naixement<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="birthDate" value="${attr(tr.birthDate)}" ${lockAttr}></label>
+        <label>Data naixement<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="birthDate" value="${attr(tr.birthDate)}"></label>
         <label>Nacionalitat<input data-entity="traveler" data-id="${tr.id}" data-field="nationality" value="${attr(tr.nationality)}"></label>
-        <label>Passaport<input data-entity="traveler" data-id="${tr.id}" data-field="passportNumber" value="${attr(tr.passportNumber)}" ${lockAttr}></label>
-        <label>Caducitat passaport<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="passportExpiryDate" value="${attr(tr.passportExpiryDate)}" ${lockAttr}></label>
+        <label>Passaport<input data-entity="traveler" data-id="${tr.id}" data-field="passportNumber" value="${attr(tr.passportNumber)}"></label>
+        <label>Caducitat passaport<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="passportExpiryDate" value="${attr(tr.passportExpiryDate)}"></label>
       </div>
-      ${lockNote}
       <button class="btn-secondary small danger" data-action="delete-traveler" data-id="${tr.id}" style="margin-top:8px;">Elimina viatger</button>
     </div>`).join('') || emptyState('Cap viatger encara.');
   $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-traveler">+ Nou viatger</button></div>${rows}`;
@@ -1354,7 +1038,6 @@ async function deleteAttachmentByRef(arrName, idx, ai) {
 //  EVENT DELEGATION
 // ════════════════════════════════════════════════════
 document.addEventListener('click', async (e) => {
-  if (e.target.classList && e.target.classList.contains('modal-overlay')) { closeModal(); return; }
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   const action = btn.dataset.action;
@@ -1388,7 +1071,6 @@ document.addEventListener('click', async (e) => {
       const id = btn.dataset.id;
       await idbDelete('trips', id);
       state.trips = state.trips.filter((t) => t.id !== id);
-      scheduleSync();
       const next = state.trips.find((t) => t.isDefault) || state.trips[0];
       state.currentTripId = next.id;
       state.currentVariantId = defaultVariantFor(next);
@@ -1421,7 +1103,6 @@ document.addEventListener('click', async (e) => {
       const tr = { id: 't-' + uid(), firstName: '', lastName: '', birthDate: null, sex: '', nationality: '', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false };
       await idbPut('travelers', tr);
       state.travelers.push(tr);
-      scheduleSync();
       if (trip) { trip.travelerIds = [...(trip.travelerIds || []), tr.id]; await saveTrip(trip); }
       renderAll();
       break;
@@ -1431,7 +1112,6 @@ document.addEventListener('click', async (e) => {
       const id = btn.dataset.id;
       await idbDelete('travelers', id);
       state.travelers = state.travelers.filter((t) => t.id !== id);
-      scheduleSync();
       for (const tp of state.trips) {
         let changed = false;
         if ((tp.travelerIds || []).includes(id)) { tp.travelerIds = tp.travelerIds.filter((x) => x !== id); changed = true; }
@@ -1456,29 +1136,6 @@ document.addEventListener('click', async (e) => {
       break;
     case 'export-ics':
       exportICS(trip);
-      break;
-    case 'set-token':
-      openSecretModal('token');
-      break;
-    case 'retry-sync':
-      doSync();
-      break;
-    case 'reload-remote':
-      location.reload();
-      break;
-    case 'set-passphrase':
-      openSecretModal('passphrase');
-      break;
-    case 'save-secret':
-      await saveSecretFromModal(btn.dataset.kind);
-      break;
-    case 'clear-secret':
-      if (btn.dataset.kind === 'token') setToken(''); else setPassphrase('');
-      closeModal();
-      renderAll();
-      break;
-    case 'close-modal':
-      closeModal();
       break;
     case 'expense-split-family': {
       const idx = +btn.dataset.idx;
@@ -1541,13 +1198,13 @@ document.addEventListener('change', async (e) => {
   }
   if (t.matches('[data-entity="traveler"][data-field]')) {
     const tr = state.travelers.find((x) => x.id === t.dataset.id);
-    if (tr) { setNested(tr, t.dataset.field, t.value); await idbPut('travelers', tr); scheduleSync(); }
+    if (tr) { setNested(tr, t.dataset.field, t.value); await idbPut('travelers', tr); }
     return;
   }
   if (t.matches('[data-arr][data-field]')) {
     updateField(t.dataset.arr, +t.dataset.idx, t.dataset.field, t.value);
-    if (t.dataset.arr === 'budget.categories' && state.tab === 'pressupost') { renderPressupostTab(getCurrentTrip()); applyReadOnlyMode(); }
-    if (t.dataset.arr === 'expenses' && state.tab === 'despeses' && (t.dataset.field === 'amount' || t.dataset.field === 'paidBy')) { renderDespesesTab(getCurrentTrip()); applyReadOnlyMode(); }
+    if (t.dataset.arr === 'budget.categories' && state.tab === 'pressupost') { renderPressupostTab(getCurrentTrip()); }
+    if (t.dataset.arr === 'expenses' && state.tab === 'despeses' && (t.dataset.field === 'amount' || t.dataset.field === 'paidBy')) { renderDespesesTab(getCurrentTrip()); }
     return;
   }
 });
