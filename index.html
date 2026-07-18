@@ -349,9 +349,9 @@ function newRowFor(arrName, trip) {
       return { day: maxDay + 1, date: '', variantId: vId, location: '', transit: '', activity: '', lodging: '', whereToEat: '', tips: '' };
     }
     case 'transportLegs':
-      return { id: 'leg-' + uid(), type: 'other', variantId: vId, code: '', route: '', dateDep: '', timeDep: '', dateArr: '', timeArr: '', provider: '', pricePerPerson: null, priceTotal: null, status: 'opcio', bookingRef: '', bookingLink: '', notes: '', attachments: [] };
+      return { id: 'leg-' + uid(), type: 'other', variantId: vId, code: '', route: '', dateDep: '', timeDep: '', dateArr: '', timeArr: '', provider: '', pricePerPerson: null, priceTotal: null, status: 'opcio', bookingRef: '', bookingLink: '', notes: '', attachments: [], paidBy: null, splitAmong: [...(trip.travelerIds || [])], linkedExpenseId: null };
     case 'lodging':
-      return { id: 'lg-' + uid(), destination: '', variantId: vId, category: 'confort', name: '', pricePerNight: null, nights: null, checkIn: '', checkOut: '', roomConfig: '', status: 'opcio', bookingLink: '', cancellationPolicy: '', notes: '', attachments: [] };
+      return { id: 'lg-' + uid(), destination: '', variantId: vId, category: 'confort', name: '', pricePerNight: null, nights: null, checkIn: '', checkOut: '', roomConfig: '', status: 'opcio', bookingLink: '', cancellationPolicy: '', notes: '', attachments: [], paidBy: null, splitAmong: [...(trip.travelerIds || [])], linkedExpenseId: null };
     case 'budget.categories':
       return { name: '', valuesByScenario: Object.fromEntries(trip.budget.scenarios.map((s) => [s.id, 0])), notes: '' };
     case 'activities':
@@ -544,6 +544,75 @@ function renderAttachments(arrName, idx, attachments) {
   </div>`;
 }
 
+// ════════════════════════════════════════════════════
+//  PAGAMENT I REPARTIMENT — el preu d'un tram/allotjament es pot marcar com
+//  a "pagat per" + repartit entre viatgers/famílies, i això manté sincronitzada
+//  una despesa vinculada al compte de Despeses (no cal apuntar-ho dues vegades).
+// ════════════════════════════════════════════════════
+function itemSplitAmong(item, trip) {
+  return (item.splitAmong && item.splitAmong.length) ? item.splitAmong : [...(trip.travelerIds || [])];
+}
+function transportLegTotalCost(item, trip) {
+  if (item.priceTotal !== null && item.priceTotal !== undefined && item.priceTotal !== '') return Number(item.priceTotal) || 0;
+  const perPerson = Number(item.pricePerPerson) || 0;
+  return round2(perPerson * itemSplitAmong(item, trip).length);
+}
+function lodgingTotalCost(item) {
+  return round2((Number(item.pricePerNight) || 0) * (Number(item.nights) || 0));
+}
+function syncLinkedExpense(trip, arrName, idx) {
+  const item = getNestedArray(trip, arrName)[idx];
+  if (!item) return;
+  const total = arrName === 'lodging' ? lodgingTotalCost(item) : transportLegTotalCost(item, trip);
+  if (!item.paidBy || !total) {
+    if (item.linkedExpenseId) {
+      trip.expenses = (trip.expenses || []).filter((e) => e.id !== item.linkedExpenseId);
+      item.linkedExpenseId = null;
+    }
+    return;
+  }
+  const category = arrName === 'lodging' ? 'Allotjament' : 'Vols i transport';
+  const description = arrName === 'lodging'
+    ? `Allotjament: ${item.name || item.destination || '(sense nom)'}`
+    : `${legTypeLabel(item.type)}: ${item.route || item.code || '(sense ruta)'}`;
+  const date = arrName === 'lodging' ? item.checkIn : item.dateDep;
+  trip.expenses = trip.expenses || [];
+  let exp = trip.expenses.find((e) => e.id === item.linkedExpenseId);
+  if (!exp) {
+    exp = { id: 'exp-' + uid(), date, description, amount: total, currency: 'EUR', foreignAmount: null, fxRate: null, paidBy: item.paidBy, splitAmong: [...itemSplitAmong(item, trip)], category, notes: '', linkedFrom: { arr: arrName, id: item.id } };
+    trip.expenses.push(exp);
+    item.linkedExpenseId = exp.id;
+  } else {
+    exp.amount = total; exp.paidBy = item.paidBy; exp.splitAmong = [...itemSplitAmong(item, trip)];
+    exp.description = description; exp.category = category; exp.date = date;
+  }
+}
+function renderPaymentSplit(arrName, idx, item, trip) {
+  const travelers = (trip.travelerIds || []).map((id) => state.travelers.find((t) => t.id === id)).filter(Boolean);
+  const among = new Set(itemSplitAmong(item, trip));
+  const total = arrName === 'lodging' ? lodgingTotalCost(item) : transportLegTotalCost(item, trip);
+  return `
+    <label>Pagat per
+      <select data-arr="${arrName}" data-idx="${idx}" data-field="paidBy">
+        <option value="">— (encara ningú) —</option>
+        ${travelers.map((t) => `<option value="${t.id}" ${item.paidBy === t.id ? 'selected' : ''}>${escapeHtml(t.firstName + ' ' + t.lastName)}</option>`).join('')}
+      </select>
+    </label>
+    <label>Es reparteix entre</label>
+    ${(trip.familyGroups || []).length ? `<div class="split-checks family-split-checks">
+      ${(trip.familyGroups || []).map((g) => {
+        const memberIds = g.travelerIds || [];
+        const allIn = memberIds.length > 0 && memberIds.every((id) => among.has(id));
+        return `<label class="split-check"><input type="checkbox" data-action="toggle-item-split-family" data-arr="${arrName}" data-idx="${idx}" data-family="${g.id}" ${allIn ? 'checked' : ''}> <strong>${escapeHtml(g.label)}</strong> (${memberIds.length}p)</label>`;
+      }).join('')}
+    </div>` : ''}
+    <div class="split-checks">
+      ${travelers.map((t) => `<label class="split-check"><input type="checkbox" data-action="toggle-item-split" data-arr="${arrName}" data-idx="${idx}" data-traveler="${t.id}" ${among.has(t.id) ? 'checked' : ''}> ${escapeHtml(t.firstName)}</label>`).join('')}
+    </div>
+    ${item.paidBy && total ? `<div class="muted small-note">✓ Afegit a Despeses: ${formatEUR(total)}</div>` : `<div class="muted small-note">Tria qui ho ha pagat per afegir-ho automàticament a Despeses.</div>`}
+  `;
+}
+
 function renderTransportTab(trip) {
   const legs = trip.transportLegs.map((l, i) => ({ ...l, _idx: i })).filter((l) => !l.variantId || l.variantId === state.currentVariantId);
   const typeOptions = ['flight_intl', 'flight_domestic', 'ferry', 'van', 'car_rental', 'parking', 'excursio', 'other'];
@@ -577,6 +646,7 @@ function renderTransportTab(trip) {
       <label>Referència de reserva (PNR)<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingRef" value="${attr(l.bookingRef)}"></label>
       <label>Enllaç de reserva<input data-arr="transportLegs" data-idx="${l._idx}" data-field="bookingLink" value="${attr(l.bookingLink)}" placeholder="https://..."></label>
       ${l.bookingLink ? `<a class="btn-link" href="${attr(l.bookingLink)}" target="_blank" rel="noopener">Obrir enllaç de reserva ↗</a>` : ''}
+      ${renderPaymentSplit('transportLegs', l._idx, l, trip)}
       <label>Notes<textarea data-arr="transportLegs" data-idx="${l._idx}" data-field="notes">${escapeHtml(l.notes || '')}</textarea></label>
       ${renderAttachments('transportLegs', l._idx, l.attachments)}
     </div>`).join('') || emptyState('Cap tram de transport encara.');
@@ -624,6 +694,7 @@ function renderAllotjamentTab(trip) {
           <label>Enllaç Booking.com<input data-arr="lodging" data-idx="${l._idx}" data-field="bookingLink" value="${attr(l.bookingLink)}" placeholder="https://www.booking.com/..."></label>
           ${l.bookingLink ? `<a class="btn-link" href="${attr(l.bookingLink)}" target="_blank" rel="noopener">Obrir a Booking.com ↗</a>` : ''}
           ${(l.name || l.destination) ? `<a class="btn-link" href="${gmapsLink(((l.name || '') + ' ' + (l.destination || '')).trim())}" target="_blank" rel="noopener">📍 Obrir a Google Maps ↗</a>` : ''}
+          ${renderPaymentSplit('lodging', l._idx, l, trip)}
           <label>Notes<textarea data-arr="lodging" data-idx="${l._idx}" data-field="notes">${escapeHtml(l.notes || '')}</textarea></label>
           ${renderAttachments('lodging', l._idx, l.attachments)}
         </div>`).join('<hr class="sep">')}
@@ -761,6 +832,7 @@ function renderDespesesTab(trip) {
         <input data-arr="expenses" data-idx="${i}" data-field="description" value="${attr(exp.description)}" placeholder="Concepte (p.ex. Sopar a Coron)" style="flex:1;">
         <button class="icon-btn danger" data-action="remove-row" data-arr="expenses" data-idx="${i}">✕</button>
       </div>
+      ${exp.linkedFrom ? `<div class="muted small-note">🔗 Vinculat a ${exp.linkedFrom.arr === 'lodging' ? 'Hotels' : 'Reserves'} — edita el preu o el repartiment des d'allà.</div>` : ''}
       <div class="grid2">
         <label>Import (€)<input type="number" data-arr="expenses" data-idx="${i}" data-field="amount" value="${exp.amount ?? ''}"></label>
         <label>Data<input type="date" data-arr="expenses" data-idx="${i}" data-field="date" value="${attr(exp.date)}"></label>
@@ -1649,6 +1721,10 @@ document.addEventListener('click', async (e) => {
         if (removed && removed.recommended && trip.variants.length) trip.variants[0].recommended = true;
         if (removed && state.currentVariantId === removed.id) state.currentVariantId = defaultVariantFor(trip);
       } else {
+        if ((arrName === 'lodging' || arrName === 'transportLegs')) {
+          const removedItem = getNestedArray(trip, arrName)[idx];
+          if (removedItem && removedItem.linkedExpenseId) trip.expenses = (trip.expenses || []).filter((e) => e.id !== removedItem.linkedExpenseId);
+        }
         getNestedArray(trip, arrName).splice(idx, 1);
       }
       await saveTrip(trip);
@@ -1784,6 +1860,32 @@ document.addEventListener('change', async (e) => {
     if (state.tab === 'despeses') renderDespesesTab(trip);
     return;
   }
+  if (t.matches('[data-action="toggle-item-split"]')) {
+    const arrName = t.dataset.arr;
+    const idx = +t.dataset.idx;
+    const item = getNestedArray(trip, arrName)[idx];
+    const set = new Set(itemSplitAmong(item, trip));
+    if (t.checked) set.add(t.dataset.traveler); else set.delete(t.dataset.traveler);
+    item.splitAmong = Array.from(set);
+    syncLinkedExpense(trip, arrName, idx);
+    await saveTrip(trip);
+    renderAll();
+    return;
+  }
+  if (t.matches('[data-action="toggle-item-split-family"]')) {
+    const arrName = t.dataset.arr;
+    const idx = +t.dataset.idx;
+    const g = (trip.familyGroups || []).find((x) => x.id === t.dataset.family);
+    if (!g) return;
+    const item = getNestedArray(trip, arrName)[idx];
+    const set = new Set(itemSplitAmong(item, trip));
+    (g.travelerIds || []).forEach((id) => { if (t.checked) set.add(id); else set.delete(id); });
+    item.splitAmong = Array.from(set);
+    syncLinkedExpense(trip, arrName, idx);
+    await saveTrip(trip);
+    renderAll();
+    return;
+  }
   if (t.matches('[data-trip-field]')) {
     setNested(trip, t.dataset.tripField, t.value);
     await saveTrip(trip);
@@ -1795,7 +1897,16 @@ document.addEventListener('change', async (e) => {
     return;
   }
   if (t.matches('[data-arr][data-field]')) {
-    updateField(t.dataset.arr, +t.dataset.idx, t.dataset.field, t.value);
+    const arrName = t.dataset.arr;
+    const idx = +t.dataset.idx;
+    updateField(arrName, idx, t.dataset.field, t.value);
+    if (arrName === 'lodging' || arrName === 'transportLegs') {
+      const trip2 = getCurrentTrip();
+      syncLinkedExpense(trip2, arrName, idx);
+      await saveTrip(trip2);
+      if (state.tab === 'despeses') { renderDespesesTab(trip2); return; }
+      if (state.tab === 'transport' || state.tab === 'allotjament' || state.tab === 'pressupost') { renderAll(); return; }
+    }
     if (t.dataset.arr === 'budget.categories' && state.tab === 'pressupost') { renderPressupostTab(getCurrentTrip()); }
     if (t.dataset.arr === 'expenses' && state.tab === 'despeses' && (t.dataset.field === 'amount' || t.dataset.field === 'paidBy')) { renderDespesesTab(getCurrentTrip()); }
     return;
