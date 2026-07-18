@@ -948,10 +948,21 @@ function renderViatgersTab(trip) {
         <label>Nom<input data-entity="traveler" data-id="${tr.id}" data-field="firstName" value="${attr(tr.firstName)}"></label>
         <label>Cognoms<input data-entity="traveler" data-id="${tr.id}" data-field="lastName" value="${attr(tr.lastName)}"></label>
         <label>Data naixement<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="birthDate" value="${attr(tr.birthDate)}"></label>
+        <label>Sexe
+          <select data-entity="traveler" data-id="${tr.id}" data-field="sex">
+            <option value="" ${!tr.sex ? 'selected' : ''}>—</option>
+            <option value="F" ${tr.sex === 'F' ? 'selected' : ''}>F</option>
+            <option value="M" ${tr.sex === 'M' ? 'selected' : ''}>M</option>
+          </select>
+        </label>
         <label>Nacionalitat<input data-entity="traveler" data-id="${tr.id}" data-field="nationality" value="${attr(tr.nationality)}"></label>
         <label>Passaport<input data-entity="traveler" data-id="${tr.id}" data-field="passportNumber" value="${attr(tr.passportNumber)}"></label>
         <label>Caducitat passaport<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="passportExpiryDate" value="${attr(tr.passportExpiryDate)}"></label>
       </div>
+      <label>Adjunts (foto o PDF del passaport)</label>
+      ${renderTravelerAttachments(tr)}
+      <button class="btn-secondary small" data-action="scan-passport" data-traveler-id="${tr.id}" style="margin-top:8px;">📷 Escaneja el passaport (omple els camps)</button>
+      <div id="passportScanStatus-${tr.id}" class="muted" style="margin-top:4px;"></div>
       <button class="btn-secondary small danger" data-action="delete-traveler" data-id="${tr.id}" style="margin-top:8px;">Elimina viatger</button>
     </div>`).join('') || emptyState('Cap viatger encara.');
   $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-traveler">+ Nou viatger</button></div>${rows}`;
@@ -1055,6 +1066,191 @@ async function deleteAttachmentByRef(arrName, idx, ai) {
 }
 
 // ════════════════════════════════════════════════════
+//  ADJUNTS DEL VIATGER (passaport) — mateix patró que els de tram/allotjament
+//  però penjats del registre de viatgers, no d'un viatge concret.
+// ════════════════════════════════════════════════════
+let travelerFileInputEl;
+function ensureTravelerFileInput() {
+  if (travelerFileInputEl) return travelerFileInputEl;
+  travelerFileInputEl = document.createElement('input');
+  travelerFileInputEl.type = 'file';
+  travelerFileInputEl.accept = 'application/pdf,image/*';
+  travelerFileInputEl.style.display = 'none';
+  document.body.appendChild(travelerFileInputEl);
+  travelerFileInputEl.addEventListener('change', async () => {
+    const file = travelerFileInputEl.files[0];
+    travelerFileInputEl.value = '';
+    const travelerId = state.pendingTravelerAttach;
+    state.pendingTravelerAttach = null;
+    if (!file || !travelerId) return;
+    const tr = state.travelers.find((t) => t.id === travelerId);
+    if (!tr) return;
+    try {
+      const buf = await file.arrayBuffer();
+      if (!buf || buf.byteLength === 0) throw new Error('El fitxer sembla buit. Si ve d’OneDrive/Drive, prova de desar-lo primer a "Fitxers" del mòbil i adjunta’l des d’allà.');
+      const blob = new Blob([buf], { type: file.type || 'application/octet-stream' });
+      const blobId = await idbAdd('attachments', { filename: file.name, mimeType: blob.type, blob });
+      tr.attachments = tr.attachments || [];
+      tr.attachments.push({ filename: file.name, blobId });
+      await idbPut('travelers', tr);
+    } catch (e) {
+      alert('No s’ha pogut adjuntar el fitxer: ' + e.message);
+    }
+    renderAll();
+  });
+  return travelerFileInputEl;
+}
+async function openTravelerAttachment(travelerId, ai) {
+  const tr = state.travelers.find((t) => t.id === travelerId);
+  const a = tr && tr.attachments && tr.attachments[ai];
+  if (!a) return;
+  const newTab = window.open('', '_blank');
+  const rec = await idbGet('attachments', a.blobId);
+  if (!rec || !rec.blob || rec.blob.size === 0) {
+    if (newTab) newTab.close();
+    alert('Aquest adjunt no s’ha pogut carregar. Torna\'l a adjuntar.');
+    return;
+  }
+  const url = URL.createObjectURL(rec.blob);
+  if (newTab) newTab.location.href = url;
+  else window.open(url, '_blank');
+}
+async function deleteTravelerAttachment(travelerId, ai) {
+  const tr = state.travelers.find((t) => t.id === travelerId);
+  if (!tr || !tr.attachments) return;
+  const a = tr.attachments[ai];
+  if (a && a.blobId != null) await idbDelete('attachments', a.blobId);
+  tr.attachments.splice(ai, 1);
+  await idbPut('travelers', tr);
+  renderAll();
+}
+function renderTravelerAttachments(tr) {
+  const items = (tr.attachments || []).map((a, ai) => `
+    <span class="chip">
+      <button data-action="open-traveler-attachment" data-traveler-id="${tr.id}" data-ai="${ai}">📎 ${escapeHtml(a.filename)}</button>
+      <button class="chip-x" data-action="delete-traveler-attachment" data-traveler-id="${tr.id}" data-ai="${ai}">✕</button>
+    </span>`).join('');
+  return `<div class="attachments">
+    <div class="attachments-list">${items}</div>
+    <button class="btn-secondary small" data-action="attach-traveler-file" data-traveler-id="${tr.id}">+ Adjuntar passaport (foto/PDF)</button>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════
+//  ESCÀNER DE PASSAPORT (MRZ) — 100% al navegador amb Tesseract.js (OCR),
+//  cap dada ni foto surt del dispositiu. Precisió variable segons la
+//  qualitat de la foto: sempre revisa els camps abans de continuar.
+// ════════════════════════════════════════════════════
+let tesseractLoadPromise = null;
+function loadTesseract() {
+  if (window.Tesseract) return Promise.resolve();
+  if (tesseractLoadPromise) return tesseractLoadPromise;
+  tesseractLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => { tesseractLoadPromise = null; reject(new Error('No s’ha pogut carregar la llibreria OCR (revisa la connexió a internet; només cal la primera vegada).')); };
+    document.head.appendChild(script);
+  });
+  return tesseractLoadPromise;
+}
+const MRZ_CHAR_VALUES = (() => {
+  const map = {};
+  for (let i = 0; i <= 9; i++) map[String(i)] = i;
+  for (let i = 0; i < 26; i++) map[String.fromCharCode(65 + i)] = 10 + i;
+  map['<'] = 0;
+  return map;
+})();
+function mrzDateToISO(yymmdd) {
+  if (!/^\d{6}$/.test(yymmdd || '')) return null;
+  const yy = +yymmdd.slice(0, 2), mm = yymmdd.slice(2, 4), dd = yymmdd.slice(4, 6);
+  const nowYY = new Date().getFullYear() % 100;
+  const century = (yy > nowYY + 20) ? 1900 : 2000;
+  return `${century + yy}-${mm}-${dd}`;
+}
+function padOrTrim(s, len) { return ((s || '') + '<'.repeat(len)).slice(0, len); }
+function findMrzLines(text) {
+  const lines = text.split('\n').map((l) => l.trim().toUpperCase().replace(/\s+/g, '').replace(/O/g, '0').replace(/[^A-Z0-9<]/g, '')).filter(Boolean);
+  // Les línies MRZ tenen ~44 caràcters (A-Z0-9<); l'OCR sovint perd algun caràcter.
+  const candidates = lines.filter((l) => l.length >= 30 && l.length <= 44 && /^[A-Z0-9<]+$/.test(l));
+  for (let i = 0; i < candidates.length - 1; i++) {
+    if (candidates[i].startsWith('P<') || candidates[i].startsWith('P4')) return [candidates[i], candidates[i + 1]];
+  }
+  if (candidates.length >= 2) return candidates.slice(-2);
+  return null;
+}
+function titleCaseName(s) { return (s || '').toLowerCase().replace(/\b\p{L}/gu, (c) => c.toUpperCase()); }
+const COUNTRY_CODE_NAMES = { ESP: 'Espanyola', FRA: 'Francesa', PRT: 'Portuguesa', ITA: 'Italiana', GBR: 'Britànica', USA: 'Nord-americana', DEU: 'Alemanya', AND: 'Andorrana', MAR: 'Marroquina', PHL: 'Filipina', ARG: 'Argentina', MEX: 'Mexicana', BRA: 'Brasilera' };
+function nationalityLabel(code) { return COUNTRY_CODE_NAMES[code] || code; }
+function parseMRZ(line1, line2) {
+  line1 = padOrTrim(line1, 44);
+  line2 = padOrTrim(line2, 44);
+  const namesRaw = line1.slice(5).replace(/<+$/, '');
+  const [surnameRaw, givenRaw] = namesRaw.split('<<');
+  const surname = (surnameRaw || '').split('<').filter(Boolean).join(' ');
+  const givenNames = (givenRaw || '').split('<').filter(Boolean).join(' ');
+  const passportNumber = line2.slice(0, 9).replace(/</g, '');
+  const nationality = line2.slice(10, 13).replace(/</g, '');
+  const sexChar = line2[20];
+  return {
+    surname: titleCaseName(surname),
+    givenNames: titleCaseName(givenNames),
+    passportNumber,
+    nationality: nationalityLabel(nationality),
+    birthDate: mrzDateToISO(line2.slice(13, 19)),
+    sex: sexChar === 'M' ? 'M' : (sexChar === 'F' ? 'F' : ''),
+    expiryDate: mrzDateToISO(line2.slice(21, 27)),
+  };
+}
+let passportScanInputEl;
+function ensurePassportScanInput() {
+  if (passportScanInputEl) return passportScanInputEl;
+  passportScanInputEl = document.createElement('input');
+  passportScanInputEl.type = 'file';
+  passportScanInputEl.accept = 'image/*';
+  passportScanInputEl.setAttribute('capture', 'environment');
+  passportScanInputEl.style.display = 'none';
+  document.body.appendChild(passportScanInputEl);
+  passportScanInputEl.addEventListener('change', async () => {
+    const file = passportScanInputEl.files[0];
+    passportScanInputEl.value = '';
+    const travelerId = state.pendingPassportScan;
+    state.pendingPassportScan = null;
+    if (!file || !travelerId) return;
+    await runPassportScan(travelerId, file);
+  });
+  return passportScanInputEl;
+}
+async function runPassportScan(travelerId, file) {
+  const tr = state.travelers.find((t) => t.id === travelerId);
+  if (!tr) return;
+  const statusEl = document.getElementById('passportScanStatus-' + travelerId);
+  if (statusEl) statusEl.textContent = '⏳ Carregant OCR…';
+  try {
+    await loadTesseract();
+    if (statusEl) statusEl.textContent = '⏳ Llegint el passaport…';
+    const { data } = await Tesseract.recognize(file, 'eng');
+    const mrzLines = findMrzLines(data.text);
+    if (!mrzLines) throw new Error('No s’ha trobat la zona de lectura (MRZ, les dues línies de codi de sota). Prova amb una foto més ben enquadrada i enfocada de la pàgina de dades.');
+    const parsed = parseMRZ(mrzLines[0], mrzLines[1]);
+    if (parsed.passportNumber) tr.passportNumber = parsed.passportNumber;
+    if (parsed.birthDate) tr.birthDate = parsed.birthDate;
+    if (parsed.expiryDate) tr.passportExpiryDate = parsed.expiryDate;
+    if (parsed.nationality) tr.nationality = parsed.nationality;
+    if (parsed.sex) tr.sex = parsed.sex;
+    if (!tr.firstName && parsed.givenNames) tr.firstName = parsed.givenNames;
+    if (!tr.lastName && parsed.surname) tr.lastName = parsed.surname;
+    await idbPut('travelers', tr);
+    if (statusEl) statusEl.textContent = '';
+    renderAll();
+    alert('S’han omplert els camps a partir de l’escaneig. Revisa’ls (sobretot el número de passaport i les dates) — l’OCR no sempre encerta el 100%.');
+  } catch (e) {
+    if (statusEl) statusEl.textContent = '';
+    alert('No s’ha pogut llegir el passaport: ' + e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════
 //  EVENT DELEGATION
 // ════════════════════════════════════════════════════
 document.addEventListener('click', async (e) => {
@@ -1120,7 +1316,7 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'add-traveler': {
-      const tr = { id: 't-' + uid(), firstName: '', lastName: '', birthDate: null, sex: '', nationality: '', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false };
+      const tr = { id: 't-' + uid(), firstName: '', lastName: '', birthDate: null, sex: '', nationality: '', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false, attachments: [] };
       await idbPut('travelers', tr);
       state.travelers.push(tr);
       if (trip) { trip.travelerIds = [...(trip.travelerIds || []), tr.id]; await saveTrip(trip); }
@@ -1150,6 +1346,20 @@ document.addEventListener('click', async (e) => {
       break;
     case 'delete-attachment':
       await deleteAttachmentByRef(btn.dataset.arr, +btn.dataset.idx, +btn.dataset.ai);
+      break;
+    case 'attach-traveler-file':
+      state.pendingTravelerAttach = btn.dataset.travelerId;
+      ensureTravelerFileInput().click();
+      break;
+    case 'open-traveler-attachment':
+      await openTravelerAttachment(btn.dataset.travelerId, +btn.dataset.ai);
+      break;
+    case 'delete-traveler-attachment':
+      await deleteTravelerAttachment(btn.dataset.travelerId, +btn.dataset.ai);
+      break;
+    case 'scan-passport':
+      state.pendingPassportScan = btn.dataset.travelerId;
+      ensurePassportScanInput().click();
       break;
     case 'export-mymaps-csv':
       exportMyMapsCSV(trip);

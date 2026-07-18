@@ -11,14 +11,14 @@
 // pestanya "Viatgers" un cop oberta l'app — es desen només al navegador/dispositiu
 // que facis servir, mai es pugen enlloc.
 const SEED_TRAVELERS = [
-  { id: 't1', firstName: 'Raimon',  lastName: 'Mariné Bellido',   birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true },
-  { id: 't2', firstName: 'Judit',   lastName: 'Sánchez Guerra',   birthDate: null, sex: 'F', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true },
-  { id: 't3', firstName: 'Candela', lastName: 'Mariné Sánchez',   birthDate: null, sex: 'F', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true },
-  { id: 't4', firstName: 'Martí',   lastName: 'Mariné Sánchez',   birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true },
+  { id: 't1', firstName: 'Raimon',  lastName: 'Mariné Bellido',   birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true, attachments: [] },
+  { id: 't2', firstName: 'Judit',   lastName: 'Sánchez Guerra',   birthDate: null, sex: 'F', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true, attachments: [] },
+  { id: 't3', firstName: 'Candela', lastName: 'Mariné Sánchez',   birthDate: null, sex: 'F', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true, attachments: [] },
+  { id: 't4', firstName: 'Martí',   lastName: 'Mariné Sánchez',   birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: true, attachments: [] },
   // Viatgers addicionals — s'afegeixen només en viatges concrets (p.ex. Filipines amb la família Sánchez Puga)
-  { id: 't5', firstName: 'Mateo',   lastName: 'Sánchez Guerra', birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false },
-  { id: 't6', firstName: 'Maia',    lastName: 'Sánchez Puga',   birthDate: null, sex: 'F', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false },
-  { id: 't7', firstName: 'Guillem', lastName: 'Sánchez Puga',   birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false },
+  { id: 't5', firstName: 'Mateo',   lastName: 'Sánchez Guerra', birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false, attachments: [] },
+  { id: 't6', firstName: 'Maia',    lastName: 'Sánchez Puga',   birthDate: null, sex: 'F', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false, attachments: [] },
+  { id: 't7', firstName: 'Guillem', lastName: 'Sánchez Puga',   birthDate: null, sex: 'M', nationality: 'Espanyola', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false, attachments: [] },
 ];
 
 // Els PDFs originals només existien a l'ordinador on es va crear l'app —
