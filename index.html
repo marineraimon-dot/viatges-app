@@ -138,7 +138,7 @@ const state = {
 
 const TABS = [
   { id: 'itinerari',    label: 'Itinerari',   icon: '🗺️' },
-  { id: 'transport',    label: 'Vols',        icon: '✈️' },
+  { id: 'transport',    label: 'Reserves',    icon: '✈️' },
   { id: 'allotjament',  label: 'Hotels',      icon: '🏨' },
   { id: 'pressupost',   label: 'Pressupost',  icon: '💰' },
   { id: 'despeses',     label: 'Despeses',    icon: '⚖️' },
@@ -270,7 +270,7 @@ function formatDateHuman(iso) {
 function statusLabel(s) { return { confirmat: 'Confirmat', planificacio: 'Planificació', passat: 'Passat' }[s] || s; }
 function lodgingStatusLabel(s) { return { reservat: 'Reservat', opcio: 'Opció', 'cancel·lat': 'Cancel·lat' }[s] || s; }
 function legTypeLabel(t) {
-  return { flight_intl: '✈ Vol internacional', flight_domestic: '✈ Vol intern', ferry: '⛴ Ferri', van: '🚐 Trasllat', car_rental: '🚗 Cotxe de lloguer', parking: '🅿️ Pàrquing', other: 'Transport' }[t] || 'Transport';
+  return { flight_intl: '✈ Vol internacional', flight_domestic: '✈ Vol intern', ferry: '⛴ Ferri', van: '🚐 Trasllat', car_rental: '🚗 Cotxe de lloguer', parking: '🅿️ Pàrquing', excursio: '🎟️ Excursió / activitat', other: 'Transport' }[t] || 'Transport';
 }
 function gmapsLink(query, lat, lng) {
   if (lat !== null && lat !== undefined && lat !== '' && lng !== null && lng !== undefined && lng !== '') {
@@ -496,8 +496,8 @@ function renderAttachments(arrName, idx, attachments) {
 
 function renderTransportTab(trip) {
   const legs = trip.transportLegs.map((l, i) => ({ ...l, _idx: i })).filter((l) => !l.variantId || l.variantId === state.currentVariantId);
-  const typeOptions = ['flight_intl', 'flight_domestic', 'ferry', 'van', 'car_rental', 'parking', 'other'];
-  const typeLabels = { flight_intl: 'Vol internacional', flight_domestic: 'Vol intern', ferry: 'Ferri', van: 'Furgoneta / trasllat', car_rental: 'Cotxe de lloguer', parking: 'Pàrquing', other: 'Altre' };
+  const typeOptions = ['flight_intl', 'flight_domestic', 'ferry', 'van', 'car_rental', 'parking', 'excursio', 'other'];
+  const typeLabels = { flight_intl: 'Vol internacional', flight_domestic: 'Vol intern', ferry: 'Ferri', van: 'Furgoneta / trasllat', car_rental: 'Cotxe de lloguer', parking: 'Pàrquing', excursio: 'Excursió / activitat', other: 'Altre' };
   const cards = legs.map((l) => `
     <div class="card">
       <div class="row-head">
@@ -702,8 +702,14 @@ function renderDespesesTab(trip) {
       </label>
       <label>Categoria<input data-arr="expenses" data-idx="${i}" data-field="category" list="expenseCategories" value="${attr(exp.category)}"></label>
       <label>Es reparteix entre</label>
+      ${(trip.familyGroups || []).length ? `<div class="split-checks family-split-checks">
+        ${(trip.familyGroups || []).map((g) => {
+          const memberIds = g.travelerIds || [];
+          const allIn = memberIds.length > 0 && memberIds.every((id) => among.has(id));
+          return `<label class="split-check"><input type="checkbox" data-action="toggle-expense-split-family" data-idx="${i}" data-family="${g.id}" ${allIn ? 'checked' : ''}> <strong>${escapeHtml(g.label)}</strong> (${memberIds.length}p)</label>`;
+        }).join('')}
+      </div>` : ''}
       <div class="split-among">
-        ${(trip.familyGroups || []).map((g) => `<button type="button" class="btn-secondary small" data-action="expense-split-family" data-idx="${i}" data-family="${g.id}">Tota ${escapeHtml(g.label)}</button>`).join('')}
         <button type="button" class="btn-secondary small" data-action="expense-split-all" data-idx="${i}">Tothom</button>
       </div>
       <div class="split-checks">
@@ -959,13 +965,13 @@ function renderViatgersTab(trip) {
         <label>Passaport<input data-entity="traveler" data-id="${tr.id}" data-field="passportNumber" value="${attr(tr.passportNumber)}"></label>
         <label>Caducitat passaport<input type="date" data-entity="traveler" data-id="${tr.id}" data-field="passportExpiryDate" value="${attr(tr.passportExpiryDate)}"></label>
       </div>
-      <label>Adjunts (foto o PDF del passaport)</label>
+      <label>Documents (passaport, QR d'immigració, etc.)</label>
       ${renderTravelerAttachments(tr)}
       <button class="btn-secondary small" data-action="scan-passport" data-traveler-id="${tr.id}" style="margin-top:8px;">📷 Escaneja el passaport (omple els camps)</button>
       <div id="passportScanStatus-${tr.id}" class="muted" style="margin-top:4px;"></div>
       <button class="btn-secondary small danger" data-action="delete-traveler" data-id="${tr.id}" style="margin-top:8px;">Elimina viatger</button>
     </div>`).join('') || emptyState('Cap viatger encara.');
-  $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-traveler">+ Nou viatger</button></div>${rows}`;
+  $('#content').innerHTML = `<div class="tab-toolbar"><button class="btn" data-action="add-traveler">+ Nou viatger</button><button class="btn-secondary" data-action="import-passports-excel">📥 Importa des d'Excel</button></div><div id="passportExcelStatus" class="muted" style="margin:4px 0 8px;"></div>${rows}`;
 }
 
 // ════════════════════════════════════════════════════
@@ -1132,7 +1138,7 @@ function renderTravelerAttachments(tr) {
     </span>`).join('');
   return `<div class="attachments">
     <div class="attachments-list">${items}</div>
-    <button class="btn-secondary small" data-action="attach-traveler-file" data-traveler-id="${tr.id}">+ Adjuntar passaport (foto/PDF)</button>
+    <button class="btn-secondary small" data-action="attach-traveler-file" data-traveler-id="${tr.id}">+ Adjuntar document (passaport, QR d'immigració, etc.)</button>
   </div>`;
 }
 
@@ -1202,6 +1208,123 @@ function parseMRZ(line1, line2) {
     expiryDate: mrzDateToISO(line2.slice(21, 27)),
   };
 }
+
+// ════════════════════════════════════════════════════
+//  IMPORTA PASSAPORTS DES D'UN EXCEL — 100% al navegador amb SheetJS
+//  (es carrega des d'un CDN només la primera vegada). El fitxer es
+//  llegeix localment; res se n'envia enlloc.
+// ════════════════════════════════════════════════════
+let sheetJsLoadPromise = null;
+function loadSheetJS() {
+  if (window.XLSX) return Promise.resolve();
+  if (sheetJsLoadPromise) return sheetJsLoadPromise;
+  sheetJsLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    script.onload = () => resolve();
+    script.onerror = () => { sheetJsLoadPromise = null; reject(new Error('No s’ha pogut carregar la llibreria de full de càlcul (revisa la connexió; només cal la primera vegada).')); };
+    document.head.appendChild(script);
+  });
+  return sheetJsLoadPromise;
+}
+function normalizeNameForMatch(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim(); }
+function normalizeHeader(s) { return normalizeNameForMatch(s).replace(/[^a-z0-9]/g, ''); }
+function detectPassportColumnMap(headerRow) {
+  const map = {};
+  (headerRow || []).forEach((h, i) => {
+    const norm = normalizeHeader(h);
+    if (norm === 'nom') map.firstName = i;
+    else if (norm === 'cognoms' || norm === 'cognom') map.lastName = i;
+    else if (norm.includes('passaport')) map.passportNumber = i;
+    else if (norm.includes('naixement') && norm.includes('lloc')) map.placeOfBirth = i;
+    else if (norm.includes('naixement')) map.birthDate = i;
+    else if (norm === 'sexe' || norm === 'sex') map.sex = i;
+    else if (norm.includes('nacionalitat')) map.nationality = i;
+    else if (norm.includes('caducitat')) map.passportExpiryDate = i;
+    else if (norm.includes('expedici')) map.passportIssueDate = i;
+  });
+  return map;
+}
+function excelSerialToISO(serial) {
+  const utcDays = Math.floor(serial - 25569);
+  const d = new Date(utcDays * 86400 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+function parseDMY(str) {
+  const m = String(str).trim().match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
+  if (!m) return null;
+  let [, d, mo, y] = m;
+  if (y.length === 2) y = (Number(y) > 50 ? '19' : '20') + y;
+  return `${y.padStart(4, '0')}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
+function normalizeExcelDate(val) {
+  if (val === null || val === undefined || val === '') return null;
+  if (typeof val === 'number') return excelSerialToISO(val);
+  return parseDMY(val);
+}
+async function importPassportsFromExcel(file) {
+  await loadSheetJS();
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+  if (!rows.length) throw new Error('El full sembla buit.');
+  const colMap = detectPassportColumnMap(rows[0]);
+  if (colMap.firstName == null && colMap.lastName == null) throw new Error('No s’han trobat columnes de "Nom"/"Cognoms" al full.');
+  let updated = 0, created = 0;
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (!row || row.every((c) => c === undefined || c === '')) continue;
+    const firstName = colMap.firstName != null ? String(row[colMap.firstName] || '').trim() : '';
+    const lastName = colMap.lastName != null ? String(row[colMap.lastName] || '').trim() : '';
+    if (!firstName && !lastName) continue;
+    const key = normalizeNameForMatch(firstName + ' ' + lastName);
+    let tr = state.travelers.find((t) => normalizeNameForMatch(t.firstName + ' ' + t.lastName) === key);
+    if (!tr) {
+      tr = { id: 't-' + uid(), firstName: titleCaseName(firstName), lastName: titleCaseName(lastName), birthDate: null, sex: '', nationality: '', placeOfBirth: null, passportNumber: null, passportIssueDate: null, passportExpiryDate: null, isCoreFamily: false, attachments: [] };
+      state.travelers.push(tr);
+      created++;
+    } else {
+      updated++;
+    }
+    if (colMap.passportNumber != null) { const v = String(row[colMap.passportNumber] || '').trim(); if (v) tr.passportNumber = v; }
+    if (colMap.birthDate != null) { const d = normalizeExcelDate(row[colMap.birthDate]); if (d) tr.birthDate = d; }
+    if (colMap.sex != null) { const s = String(row[colMap.sex] || '').trim().toUpperCase(); if (s === 'M' || s === 'F') tr.sex = s; }
+    if (colMap.nationality != null) { const v = String(row[colMap.nationality] || '').trim(); if (v) tr.nationality = v; }
+    if (colMap.placeOfBirth != null) { const v = String(row[colMap.placeOfBirth] || '').trim(); if (v) tr.placeOfBirth = v; }
+    if (colMap.passportIssueDate != null) { const d = normalizeExcelDate(row[colMap.passportIssueDate]); if (d) tr.passportIssueDate = d; }
+    if (colMap.passportExpiryDate != null) { const d = normalizeExcelDate(row[colMap.passportExpiryDate]); if (d) tr.passportExpiryDate = d; }
+    await idbPut('travelers', tr);
+  }
+  return { updated, created };
+}
+let passportExcelInputEl;
+function ensurePassportExcelInput() {
+  if (passportExcelInputEl) return passportExcelInputEl;
+  passportExcelInputEl = document.createElement('input');
+  passportExcelInputEl.type = 'file';
+  passportExcelInputEl.accept = '.xlsx,.xls,.csv';
+  passportExcelInputEl.style.display = 'none';
+  document.body.appendChild(passportExcelInputEl);
+  passportExcelInputEl.addEventListener('change', async () => {
+    const file = passportExcelInputEl.files[0];
+    passportExcelInputEl.value = '';
+    if (!file) return;
+    const statusEl = document.getElementById('passportExcelStatus');
+    if (statusEl) statusEl.textContent = '⏳ Llegint el full de càlcul…';
+    try {
+      const { updated, created } = await importPassportsFromExcel(file);
+      if (statusEl) statusEl.textContent = '';
+      renderAll();
+      alert(`Importació feta: ${updated} viatger(s) actualitzats, ${created} de nous. Revisa les dades a la llista.`);
+    } catch (e) {
+      if (statusEl) statusEl.textContent = '';
+      alert('No s’ha pogut importar el fitxer: ' + e.message);
+    }
+  });
+  return passportExcelInputEl;
+}
+
 let passportScanInputEl;
 function ensurePassportScanInput() {
   if (passportScanInputEl) return passportScanInputEl;
@@ -1361,24 +1484,15 @@ document.addEventListener('click', async (e) => {
       state.pendingPassportScan = btn.dataset.travelerId;
       ensurePassportScanInput().click();
       break;
+    case 'import-passports-excel':
+      ensurePassportExcelInput().click();
+      break;
     case 'export-mymaps-csv':
       exportMyMapsCSV(trip);
       break;
     case 'export-ics':
       exportICS(trip);
       break;
-    case 'expense-split-family': {
-      const idx = +btn.dataset.idx;
-      const g = (trip.familyGroups || []).find((x) => x.id === btn.dataset.family);
-      if (!g) break;
-      const exp = trip.expenses[idx];
-      const set = new Set(exp.splitAmong || []);
-      (g.travelerIds || []).forEach((id) => set.add(id));
-      exp.splitAmong = Array.from(set);
-      await saveTrip(trip);
-      renderAll();
-      break;
-    }
     case 'expense-split-all': {
       const idx = +btn.dataset.idx;
       trip.expenses[idx].splitAmong = [...(trip.travelerIds || [])];
@@ -1416,6 +1530,18 @@ document.addEventListener('change', async (e) => {
     const exp = trip.expenses[idx];
     const set = new Set(exp.splitAmong || []);
     if (t.checked) set.add(travelerId); else set.delete(travelerId);
+    exp.splitAmong = Array.from(set);
+    await saveTrip(trip);
+    if (state.tab === 'despeses') renderDespesesTab(trip);
+    return;
+  }
+  if (t.matches('[data-action="toggle-expense-split-family"]')) {
+    const idx = +t.dataset.idx;
+    const g = (trip.familyGroups || []).find((x) => x.id === t.dataset.family);
+    if (!g) return;
+    const exp = trip.expenses[idx];
+    const set = new Set(exp.splitAmong || []);
+    (g.travelerIds || []).forEach((id) => { if (t.checked) set.add(id); else set.delete(id); });
     exp.splitAmong = Array.from(set);
     await saveTrip(trip);
     if (state.tab === 'despeses') renderDespesesTab(trip);
